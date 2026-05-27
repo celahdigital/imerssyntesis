@@ -49,14 +49,19 @@
 <body class="bg-dark-900 text-slate-200 font-sans h-screen overflow-hidden flex">
 
     <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 no-print"></div>
+    
+    <!-- LOADER ANTI-NYANGKUT -->
     <div id="loader" class="fixed inset-0 bg-dark-900/80 backdrop-blur-sm z-[100] hidden items-center justify-center no-print">
-        <div class="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+        <div class="flex flex-col items-center gap-3">
+            <div class="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-brand-500 font-medium text-sm animate-pulse">Menghubungkan ke Server...</p>
+        </div>
     </div>
 
     <!-- LOGIN -->
     <div id="view-login" class="view-section active fixed inset-0 z-50 bg-dark-900 flex items-center justify-center bg-[url('https://images.unsplash.com/photo-1542314831-c6a4d27ce669?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center no-print">
         <div class="absolute inset-0 bg-dark-900/85 backdrop-blur-md"></div>
-        <div class="glass-card w-full max-w-sm p-8 rounded-2xl relative z-10 mx-4">
+        <div class="glass-card w-full max-w-sm p-8 rounded-2xl relative z-10 mx-4 shadow-2xl">
             <div class="text-center mb-8">
                 <h1 class="text-2xl font-bold text-white tracking-tight">iMers<span class="font-light text-brand-500">Report</span></h1>
                 <p class="text-slate-400 text-sm mt-1">Executive P&L Portal</p>
@@ -65,7 +70,7 @@
                 <div>
                     <div class="relative">
                         <i class="ph ph-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="login-user" required class="w-full bg-dark-800/80 border border-slate-700 rounded-lg py-2.5 pl-10 pr-4 text-white focus:border-brand-500 outline-none" placeholder="Username">
+                        <input type="text" id="login-user" required class="w-full bg-dark-800/80 border border-slate-700 rounded-lg py-2.5 pl-10 pr-4 text-white focus:border-brand-500 outline-none" placeholder="Username (ex: admin)">
                     </div>
                 </div>
                 <div>
@@ -74,8 +79,8 @@
                         <input type="password" id="login-pin" required pattern="[0-9]{6}" class="w-full bg-dark-800/80 border border-slate-700 rounded-lg py-2.5 pl-10 pr-4 text-white focus:border-brand-500 outline-none tracking-[0.3em]" placeholder="6-Digit PIN">
                     </div>
                 </div>
-                <button type="submit" id="btn-login" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
-                    <span>Access Portal</span>
+                <button type="submit" id="btn-login" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2">
+                    <i class="ph ph-sign-in font-bold"></i> <span>Access Portal</span>
                 </button>
             </form>
         </div>
@@ -330,13 +335,13 @@
             if (State.user) initApp();
         });
 
-        // --- API HANDLER ---
+        // --- API HANDLER (ANTI-NYANGKUT) ---
         async function apiCall(action, payload = {}) {
-            if(GAS_API_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL') {
-                showToast("Please put your Web App URL in the HTML code.", "error"); return null;
-            }
-            document.getElementById('loader').style.display = 'flex';
+            const loader = document.getElementById('loader');
+            loader.style.display = 'flex';
+            
             try {
+                console.log(`Mengirim aksi: ${action}`);
                 const res = await fetch(GAS_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -344,9 +349,8 @@
                     redirect: 'follow'
                 });
                 
-                // Cek jika Apps Script menolak akses (Contoh: Belum di set "Anyone")
                 if (!res.ok) {
-                    throw new Error(`Koneksi Gagal (HTTP ${res.status}). Pastikan URL benar.`);
+                    throw new Error(`Koneksi ke Google Gagal (HTTP ${res.status}). Pastikan URL benar.`);
                 }
 
                 const textResponse = await res.text();
@@ -355,31 +359,26 @@
                 try {
                     result = JSON.parse(textResponse);
                 } catch(e) {
-                    console.error("RAW Response dari Server:", textResponse);
-                    
-                    // Mencoba menangkap pesan error asli dari Google jika berbentuk HTML
-                    let errMsg = "Pastikan Deployment Apps Script diset 'Who has access: Anyone' dan versi terbaru.";
-                    if(textResponse.includes("Exception:")) {
-                        const match = textResponse.match(/Exception:.*?(?=<)/);
-                        if(match) errMsg = match[0];
-                    } else if (textResponse.includes("SyntaxError")) {
-                        errMsg = "Terjadi SyntaxError di Code.gs backend Anda.";
+                    console.error("RAW Response Server:", textResponse);
+                    let errMsg = "Terjadi kesalahan sistem dari Google. Pastikan URL Web App tepat dan Anda mengakses dengan 'Anyone'.";
+                    if(textResponse.includes("Exception:") || textResponse.includes("SyntaxError")) {
+                        errMsg = "Ada error di dalam kode Code.gs Anda. Cek kembali setup database.";
                     }
-                    
-                    throw new Error("Server Error: " + errMsg);
+                    throw new Error(errMsg);
                 }
-
-                document.getElementById('loader').style.display = 'none';
                 
                 if (result.status === 'success') {
                     return result.data;
                 } else {
-                    throw new Error(result.message);
+                    throw new Error(result.message); // Tangkap error jika username/pin salah
                 }
             } catch (err) {
-                document.getElementById('loader').style.display = 'none';
+                console.error("[Sistem Error]", err);
                 showToast(err.message, 'error');
-                throw err;
+                throw err; // Lempar ke pemanggil fungsi agar animasi tombol direstore
+            } finally {
+                // BLOK INI PASTI DIEKSEKUSI APAPUN YANG TERJADI. LOADING PASTI BERHENTI.
+                loader.style.display = 'none';
             }
         }
 
@@ -389,6 +388,7 @@
             const btn = document.getElementById('btn-login');
             const originalBtnHtml = btn.innerHTML;
             
+            // Ubah state tombol menjadi loading
             btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> Authenticating...';
             btn.disabled = true;
 
@@ -400,14 +400,16 @@
                 State.user = data.user;
                 localStorage.setItem('imers_user', JSON.stringify(data.user));
                 showToast(`Welcome, ${username}`, 'success');
+                
+                // Kembalikan state tombol
                 btn.innerHTML = originalBtnHtml;
                 btn.disabled = false;
+                
                 initApp();
             } catch(error) {
-                // Tangkap error jika PIN salah atau koneksi gagal
+                // Jika error, pastikan tombol login bisa diklik lagi
                 btn.innerHTML = originalBtnHtml;
                 btn.disabled = false;
-                console.error("Login Error:", error);
             }
         }
 
