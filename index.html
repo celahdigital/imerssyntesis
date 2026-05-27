@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iMers Income Synthesis | Executive Analytics</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            900: '#1e3a8a',
+                        },
+                        dark: {
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        /* Glassmorphism utilities */
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-card {
+            background: linear-gradient(145deg, rgba(30,41,59,0.8) 0%, rgba(15,23,42,0.9) 100%);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        [x-cloak] { display: none !important; }
+        .view-section { display: none !important; }
+        .view-section.active { display: block !important; animation: fadeIn 0.4s ease-out; }
+        #view-login.view-section.active { display: flex !important; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-dark-900 text-slate-200 font-sans min-h-screen antialiased selection:bg-brand-500 selection:text-white flex overflow-hidden">
+
+    <!-- NOTIFICATION TOAST -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="view-login" class="view-section active fixed inset-0 z-50 bg-dark-900 flex items-center justify-center bg-[url('https://images.unsplash.com/photo-1542314831-c6a4d27ce669?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center">
+        <div class="absolute inset-0 bg-dark-900/80 backdrop-blur-sm"></div>
+        
+        <div class="glass-card w-full max-w-md p-8 rounded-2xl relative z-10 mx-4">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-brand-500/20 text-brand-500 mb-4 ring-1 ring-brand-500/50">
+                    <i class="ph ph-buildings text-3xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-white tracking-tight">iMers Synthesis</h1>
+                <p class="text-slate-400 text-sm mt-1">Enterprise Hospitality Analytics</p>
+            </div>
+            
+            <form id="login-form" class="space-y-5" onsubmit="handleLogin(event)">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Username</label>
+                    <div class="relative">
+                        <i class="ph ph-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="username" required class="w-full bg-dark-800/50 border border-slate-700 rounded-lg py-2.5 pl-10 pr-4 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors" placeholder="Enter username (e.g., admin)">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Secure PIN</label>
+                    <div class="relative">
+                        <i class="ph ph-lock-key absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="password" id="pin" required pattern="[0-9]{6}" maxlength="6" class="w-full bg-dark-800/50 border border-slate-700 rounded-lg py-2.5 pl-10 pr-4 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors text-center tracking-[0.5em]" placeholder="••••••">
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2 text-center">Enter 6-digit access PIN (e.g., 123456)</p>
+                </div>
+                <button type="submit" id="login-btn" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2 mt-4 shadow-lg shadow-brand-500/20">
+                    <span>Authenticate</span>
+                    <i class="ph ph-arrow-right font-bold"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP LAYOUT -->
+    <div id="app-layout" class="hidden w-full h-screen flex">
+        
+        <!-- SIDEBAR -->
+        <aside class="w-64 glass border-r border-slate-700/50 flex flex-col flex-shrink-0 z-20 hidden md:flex">
+            <div class="h-16 flex items-center px-6 border-b border-slate-700/50">
+                <i class="ph ph-buildings text-brand-500 text-2xl mr-2"></i>
+                <span class="text-lg font-bold text-white tracking-wide">iMers<span class="font-light">BI</span></span>
+            </div>
+            
+            <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-1">
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 mt-4 px-2">Analytics</div>
+                <a href="#" onclick="navigate('dashboard')" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors" data-target="dashboard">
+                    <i class="ph ph-squares-four text-lg"></i> Executive Dash
+                </a>
+                
+                <div class="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 mt-6 px-2">
+                    <span>Departments</span>
+                    <button onclick="showToast('Manage departments via Admin menu', 'info')" class="hover:text-brand-400 transition-colors" title="Add Department"><i class="ph ph-plus"></i></button>
+                </div>
+                <!-- Dynamic Department List Container -->
+                <div id="dynamic-dept-menu" class="space-y-1">
+                    <!-- Populated by JS -->
+                </div>
+                
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 mt-8 px-2">Configuration</div>
+                <a href="#" onclick="showToast('Module in development')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors">
+                    <i class="ph ph-buildings text-lg"></i> Properties
+                </a>
+                <a href="#" onclick="showToast('Module in development')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors">
+                    <i class="ph ph-users text-lg"></i> Access Control
+                </a>
+                <a href="#" onclick="navigate('settings')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors" data-target="settings">
+                    <i class="ph ph-gear text-lg"></i> System Settings
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-slate-700/50">
+                <div class="flex items-center gap-3 px-2">
+                    <div class="w-8 h-8 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center ring-1 ring-brand-500/50">
+                        <i class="ph ph-user font-bold"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p id="current-user-name" class="text-sm font-medium text-white truncate">Admin User</p>
+                        <p class="text-xs text-slate-400 truncate">System Administrator</p>
+                    </div>
+                    <button onclick="logout()" class="text-slate-400 hover:text-rose-400 transition-colors" title="Logout">
+                        <i class="ph ph-sign-out text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+            
+            <!-- TOP NAVBAR -->
+            <header class="h-16 glass border-b border-slate-700/50 flex items-center justify-between px-6 z-10 sticky top-0">
+                
+                <!-- Global Filters -->
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 bg-dark-800/50 border border-slate-700 rounded-lg px-3 py-1.5">
+                        <i class="ph ph-buildings text-slate-400"></i>
+                        <select id="filter-property" onchange="refreshData()" class="bg-transparent border-none text-sm text-white focus:ring-0 cursor-pointer outline-none w-32">
+                            <option value="ALL">All Properties</option>
+                            <option value="PROP1" selected>Grand Royal</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 bg-dark-800/50 border border-slate-700 rounded-lg px-3 py-1.5">
+                        <i class="ph ph-calendar text-slate-400"></i>
+                        <select id="filter-month" onchange="refreshData()" class="bg-transparent border-none text-sm text-white focus:ring-0 cursor-pointer outline-none">
+                            <option value="ALL">YTD (All Months)</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5" selected>May</option>
+                            <option value="6">June</option>
+                            <!-- other months omitted for brevity -->
+                        </select>
+                        <span class="text-slate-600">/</span>
+                        <select id="filter-year" onchange="refreshData()" class="bg-transparent border-none text-sm text-white focus:ring-0 cursor-pointer outline-none">
+                            <option value="2026" selected>2026</option>
+                            <option value="2025">2025</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 bg-dark-800/50 border border-slate-700 rounded-lg px-3 py-1.5">
+                        <i class="ph ph-wallet text-slate-400"></i>
+                        <select id="filter-budget" onchange="refreshData()" class="bg-transparent border-none text-sm text-white focus:ring-0 cursor-pointer outline-none">
+                            <option value="OWNER">Owner Budget</option>
+                            <option value="REVISED">Revised Budget</option>
+                            <option value="FORECAST">Forecast</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <button onclick="exportReport()" class="flex items-center gap-2 text-sm text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg transition-colors border border-slate-700">
+                        <i class="ph ph-export"></i> Export PDF
+                    </button>
+                    <button onclick="refreshData()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                        <i class="ph ph-arrows-clockwise text-lg"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- SCROLLABLE CONTENT AREA -->
+            <div class="flex-1 overflow-y-auto p-6 relative">
+                <!-- Global Loading Overlay -->
+                <div id="loader" class="absolute inset-0 bg-dark-900/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+                    <div class="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+
+                <!-- ================= DASHBOARD VIEW ================= -->
+                <div id="view-dashboard" class="view-section active space-y-6">
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <h2 class="text-2xl font-bold text-white tracking-tight">Executive Dashboard</h2>
+                            <p class="text-slate-400 text-sm mt-1">Financial synthesis and KPI monitoring</p>
+                        </div>
+                    </div>
+
+                    <!-- KPI Cards Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Revenue Card -->
+                        <div class="glass-card rounded-xl p-5 border-l-4 border-l-brand-500">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-slate-400 text-xs uppercase tracking-wider font-semibold">Total Revenue</p>
+                                    <h3 class="text-2xl font-bold text-white mt-1" id="kpi-revenue">$0</h3>
+                                </div>
+                                <div class="w-10 h-10 rounded-lg bg-brand-500/20 flex items-center justify-center text-brand-500">
+                                    <i class="ph ph-money text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex items-center gap-2 text-sm">
+                                <span id="kpi-growth" class="text-emerald-400 flex items-center gap-1 font-medium">
+                                    <i class="ph ph-trend-up"></i> 0%
+                                </span>
+                                <span class="text-slate-500 text-xs">vs Last Year</span>
+                            </div>
+                        </div>
+
+                        <!-- Gross Profit Card -->
+                        <div class="glass-card rounded-xl p-5 border-l-4 border-l-emerald-500">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-slate-400 text-xs uppercase tracking-wider font-semibold">Gross Profit</p>
+                                    <h3 class="text-2xl font-bold text-white mt-1" id="kpi-profit">$0</h3>
+                                </div>
+                                <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-500">
+                                    <i class="ph ph-chart-line-up text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex items-center gap-2 text-sm">
+                                <span id="kpi-margin" class="text-white font-medium">0%</span>
+                                <span class="text-slate-500 text-xs">Profit Margin</span>
+                            </div>
+                        </div>
+
+                        <!-- Expenses Card -->
+                        <div class="glass-card rounded-xl p-5 border-l-4 border-l-rose-500">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-slate-400 text-xs uppercase tracking-wider font-semibold">Total Expenses</p>
+                                    <h3 class="text-2xl font-bold text-white mt-1" id="kpi-expenses">$0</h3>
+                                </div>
+                                <div class="w-10 h-10 rounded-lg bg-rose-500/20 flex items-center justify-center text-rose-500">
+                                    <i class="ph ph-chart-line-down text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex items-center gap-2 text-sm">
+                                <span id="kpi-expratio" class="text-rose-400 font-medium">0%</span>
+                                <span class="text-slate-500 text-xs">Expense Ratio</span>
+                            </div>
+                        </div>
+
+                        <!-- Budget Achieved Card -->
+                        <div class="glass-card rounded-xl p-5 border-l-4 border-l-amber-500">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-slate-400 text-xs uppercase tracking-wider font-semibold">Budget Achieved</p>
+                                    <h3 class="text-2xl font-bold text-white mt-1" id="kpi-achievement">0%</h3>
+                                </div>
+                                <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-500">
+                                    <i class="ph ph-target text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4 w-full bg-slate-800 rounded-full h-1.5">
+                                <div id="kpi-achieve-bar" class="bg-amber-500 h-1.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                            <div class="mt-2 text-xs text-slate-500 flex justify-between">
+                                <span id="kpi-variance" class="text-slate-400">Var: $0</span>
+                                <span>Target: 100%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Charts Row -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Left Chart: YTD Trend -->
+                        <div class="lg:col-span-2 glass-card rounded-xl p-5">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-semibold text-white">Financial Synthesis (YTD)</h3>
+                                <button class="text-slate-400 hover:text-white"><i class="ph ph-dots-three text-xl"></i></button>
+                            </div>
+                            <div class="relative h-72 w-full">
+                                <canvas id="mainTrendChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: AI Insights -->
+                        <div class="glass-card rounded-xl p-5 flex flex-col">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-semibold text-white flex items-center gap-2">
+                                    <i class="ph ph-sparkle text-brand-500"></i> AI Synthesis Insights
+                                </h3>
+                            </div>
+                            <div id="ai-insights-container" class="flex-1 overflow-y-auto space-y-3 pr-2">
+                                <!-- Dynamic Insights Injected Here -->
+                                <div class="p-3 bg-brand-500/10 border border-brand-500/20 rounded-lg animate-pulse">
+                                    <div class="h-4 bg-brand-500/20 rounded w-3/4 mb-2"></div>
+                                    <div class="h-3 bg-brand-500/10 rounded w-1/2"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Row -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Department Ranking -->
+                        <div class="glass-card rounded-xl p-5">
+                            <h3 class="font-semibold text-white mb-4">Department Performance</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm whitespace-nowrap">
+                                    <thead>
+                                        <tr class="text-slate-400 border-b border-slate-700">
+                                            <th class="pb-3 font-medium">Department</th>
+                                            <th class="pb-3 font-medium text-right">Actual</th>
+                                            <th class="pb-3 font-medium text-right">Budget</th>
+                                            <th class="pb-3 font-medium text-right">Ach.%</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dept-table-body">
+                                        <!-- Dynamic rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Expense Distribution Chart -->
+                        <div class="glass-card rounded-xl p-5">
+                            <h3 class="font-semibold text-white mb-4">Expense Distribution</h3>
+                            <div class="relative h-64 w-full flex justify-center">
+                                <canvas id="expenseDoughnutChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= DEPARTMENT VIEW (DYNAMIC) ================= -->
+                <div id="view-department" class="view-section space-y-6">
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <h2 id="dept-view-title" class="text-2xl font-bold text-white tracking-tight">Department View</h2>
+                            <p class="text-slate-400 text-sm mt-1">Granular financial tracking and performance</p>
+                        </div>
+                    </div>
+                    <div class="glass-card rounded-xl p-10 text-center">
+                        <i class="ph ph-tree-structure text-6xl text-slate-600 mb-4 inline-block"></i>
+                        <h3 class="text-xl font-medium text-white mb-2">Department Module</h3>
+                        <p class="text-slate-400 max-w-md mx-auto">This is a dynamic view. When connected to the API, it will load specific Revenue Accounts, Expense Accounts, and Budget parameters specifically mapped to <strong id="dept-view-name" class="text-brand-400">this department</strong>.</p>
+                    </div>
+                </div>
+
+                <!-- ================= SETTINGS VIEW ================= -->
+                <div id="view-settings" class="view-section space-y-6">
+                    <h2 class="text-2xl font-bold text-white tracking-tight mb-6">System Configuration</h2>
+                    <div class="max-w-2xl glass-card rounded-xl p-6">
+                        <form class="space-y-4" onsubmit="event.preventDefault(); showToast('Settings Saved', 'success')">
+                            <div class="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg flex gap-3 text-sm mb-4">
+                                <i class="ph ph-info text-amber-500 text-xl shrink-0"></i>
+                                <p class="text-amber-200">API URL is now hardcoded directly in the source code. Connection settings are managed by the IT / Developer.</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-1">Default Property Name</label>
+                                <input type="text" value="Grand Royal Hotel" class="w-full bg-dark-800 border border-slate-700 rounded-lg p-2 text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-1">Currency Symbol</label>
+                                <input type="text" value="$" class="w-24 bg-dark-800 border border-slate-700 rounded-lg p-2 text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                            </div>
+                            <button type="submit" class="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-lg text-sm transition-colors mt-2">Save Configuration</button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- APPLICATION LOGIC -->
+    <script>
+        /**
+         * ---------------------------------------------------------
+         * SYSTEM CONFIGURATION & STATE
+         * ---------------------------------------------------------
+         */
+        // IMPORTANT: Hardcoded Google Apps Script Web App URL!
+        let GAS_API_URL = 'YOUR_GAS_WEB_APP_URL_HERE';
+        
+        const State = {
+            token: localStorage.getItem('imers_token'),
+            user: JSON.parse(localStorage.getItem('imers_user') || 'null'),
+            kpi: null,
+            charts: {},
+            // Default departments list (Flexible: can be injected/fetched via Admin API later)
+            departments: [
+                { id: 'dept_rooms', name: 'Rooms Division', icon: 'bed' },
+                { id: 'dept_fb', name: 'Food & Beverage', icon: 'coffee' },
+                { id: 'dept_spa', name: 'Spa & Wellness', icon: 'drop' },
+                { id: 'dept_minor', name: 'Minor Operating', icon: 'storefront' }
+            ]
+        };
+
+        // Format Currency
+        const fmtCur = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(num);
+        const fmtPct = (num) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format(num) + '%';
+
+        /**
+         * ---------------------------------------------------------
+         * INITIALIZATION & ROUTING
+         * ---------------------------------------------------------
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            if (State.token) {
+                initApp();
+            }
+        });
+
+        // Function to dynamically render sidebar based on State.departments array
+        function renderDepartmentMenu() {
+            const container = document.getElementById('dynamic-dept-menu');
+            container.innerHTML = '';
+            
+            State.departments.forEach(dept => {
+                container.innerHTML += `
+                    <a href="#" onclick="navigateDepartment('${dept.id}', '${dept.name}')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors" data-target="${dept.id}">
+                        <i class="ph ph-${dept.icon} text-lg"></i> ${dept.name}
+                    </a>
+                `;
+            });
+        }
+
+        function navigate(viewId) {
+            // Hide all views
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            // Update active nav link
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active', 'bg-white/10', 'text-white');
+                if(el.dataset.target === viewId) el.classList.add('active', 'bg-white/10', 'text-white');
+            });
+            // Show target view
+            const targetView = document.getElementById(`view-${viewId}`);
+            if(targetView) targetView.classList.add('active');
+            
+            if(viewId === 'dashboard' && !State.kpi) refreshData();
+        }
+
+        // Specific function to handle navigation into dynamic department views
+        function navigateDepartment(deptId, deptName) {
+            // Change view titles dynamically
+            document.getElementById('dept-view-title').innerText = deptName;
+            document.getElementById('dept-view-name').innerText = deptName;
+            
+            // Show generic department view container
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-department').classList.add('active');
+            
+            // Set sidebar active state
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active', 'bg-white/10', 'text-white');
+                if(el.dataset.target === deptId) el.classList.add('active', 'bg-white/10', 'text-white');
+            });
+        }
+
+        function showLoader(show = true) {
+            document.getElementById('loader').style.display = show ? 'flex' : 'none';
+        }
+
+        /**
+         * ---------------------------------------------------------
+         * API COMMUNICATION LAYER (Fetch)
+         * ---------------------------------------------------------
+         */
+        async function apiCall(action, payload = {}) {
+            if (!GAS_API_URL || GAS_API_URL.includes('YOUR_GAS')) {
+                // If no real API, return Mock Data for Demonstration
+                console.warn("No API URL provided. Generating mock data for demonstration.");
+                return generateMockData(action, payload);
+            }
+
+            try {
+                showLoader(true);
+                const response = await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Avoids CORS preflight issues
+                    body: JSON.stringify({ action, ...payload }),
+                    redirect: 'follow'
+                });
+                
+                const result = await response.json();
+                showLoader(false);
+                
+                if (result.status === 'success') {
+                    return result.data;
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                showLoader(false);
+                showToast(error.message, 'error');
+                throw error;
+            }
+        }
+
+        /**
+         * ---------------------------------------------------------
+         * AUTHENTICATION
+         * ---------------------------------------------------------
+         */
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const pin = document.getElementById('pin').value;
+            const btn = document.getElementById('login-btn');
+            
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> Authenticating...';
+            btn.disabled = true;
+
+            try {
+                const data = await apiCall('login', { username, pin });
+                // Handle Success
+                State.token = data.token;
+                State.user = data.user;
+                localStorage.setItem('imers_token', data.token);
+                localStorage.setItem('imers_user', JSON.stringify(data.user));
+                
+                showToast(`Welcome back, ${data.user.username}`);
+                initApp();
+            } catch (error) {
+                btn.innerHTML = '<span>Authenticate</span> <i class="ph ph-arrow-right font-bold"></i>';
+                btn.disabled = false;
+                showToast(error.message || "Authentication failed. Please check your credentials.", 'error');
+            }
+        }
+
+        function initApp() {
+            document.getElementById('view-login').classList.remove('active');
+            document.getElementById('app-layout').classList.remove('hidden');
+            document.getElementById('current-user-name').innerText = State.user.username.toUpperCase();
+            
+            // Render flexible department menu
+            renderDepartmentMenu();
+            
+            // Set Chart Defaults for Dark Theme
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.scale.grid.color = '#334155';
+            
+            navigate('dashboard');
+        }
+
+        function logout() {
+            localStorage.removeItem('imers_token');
+            localStorage.removeItem('imers_user');
+            State.token = null;
+            State.user = null;
+            document.getElementById('app-layout').classList.add('hidden');
+            document.getElementById('view-login').classList.add('active');
+            
+            // Reset button
+            const btn = document.getElementById('login-btn');
+            btn.innerHTML = '<span>Authenticate</span> <i class="ph ph-arrow-right font-bold"></i>';
+            btn.disabled = false;
+        }
+
+        /**
+         * ---------------------------------------------------------
+         * DASHBOARD & FINANCIAL LOGIC
+         * ---------------------------------------------------------
+         */
+        async function refreshData() {
+            const property = document.getElementById('filter-property').value;
+            const month = document.getElementById('filter-month').value;
+            const year = document.getElementById('filter-year').value;
+            
+            try {
+                const data = await apiCall('getDashboard', { property_id: property, month, year });
+                State.kpi = data;
+                updateDashboardUI(data);
+            } catch (error) {
+                console.error("Dashboard Error", error);
+            }
+        }
+
+        function updateDashboardUI(data) {
+            const { kpi, trends, departments, insights } = data;
+
+            // Update KPI Cards
+            animateValue('kpi-revenue', kpi.totalRevenue, fmtCur);
+            animateValue('kpi-expenses', kpi.totalExpenses, fmtCur);
+            animateValue('kpi-profit', kpi.grossProfit, fmtCur);
+            
+            document.getElementById('kpi-achievement').innerText = fmtPct(kpi.budgetAchievement);
+            document.getElementById('kpi-achieve-bar').style.width = Math.min(kpi.budgetAchievement, 100) + '%';
+            
+            // Set colors dynamically based on performance
+            if(kpi.budgetAchievement < 90) document.getElementById('kpi-achieve-bar').className = "h-1.5 rounded-full bg-rose-500";
+            else if(kpi.budgetAchievement > 100) document.getElementById('kpi-achieve-bar').className = "h-1.5 rounded-full bg-emerald-500";
+            else document.getElementById('kpi-achieve-bar').className = "h-1.5 rounded-full bg-amber-500";
+
+            document.getElementById('kpi-growth').innerHTML = `<i class="ph ph-trend-${kpi.growth >= 0 ? 'up' : 'down'}"></i> ${fmtPct(kpi.growth)}`;
+            document.getElementById('kpi-growth').className = `font-medium flex items-center gap-1 ${kpi.growth >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            
+            const margin = kpi.totalRevenue > 0 ? (kpi.grossProfit / kpi.totalRevenue) * 100 : 0;
+            document.getElementById('kpi-margin').innerText = fmtPct(margin);
+            document.getElementById('kpi-expratio').innerText = fmtPct(kpi.expenseRatio);
+            document.getElementById('kpi-variance').innerText = 'Var: ' + fmtCur(kpi.variance);
+            document.getElementById('kpi-variance').className = kpi.variance >= 0 ? 'text-emerald-400 text-xs' : 'text-rose-400 text-xs';
+
+            // Render AI Insights
+            const insightsContainer = document.getElementById('ai-insights-container');
+            insightsContainer.innerHTML = '';
+            insights.forEach((insight, idx) => {
+                const isPositive = insight.toLowerCase().includes('outstanding') || insight.toLowerCase().includes('strong') || insight.toLowerCase().includes('healthy');
+                const icon = isPositive ? 'check-circle text-emerald-400' : 'warning-circle text-amber-400';
+                const bg = isPositive ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20';
+                
+                insightsContainer.innerHTML += `
+                    <div class="p-3 ${bg} border rounded-lg flex gap-3 text-sm" style="animation: fadeIn ${0.3 + (idx*0.1)}s ease-out">
+                        <i class="ph ph-${icon} text-lg shrink-0 mt-0.5"></i>
+                        <span class="text-slate-300 leading-snug">${insight}</span>
+                    </div>
+                `;
+            });
+
+            // Update Department Table
+            const tbody = document.getElementById('dept-table-body');
+            tbody.innerHTML = '';
+            departments.forEach(dept => {
+                const colorClass = dept.achievement >= 100 ? 'text-emerald-400' : (dept.achievement > 85 ? 'text-amber-400' : 'text-rose-400');
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-700/50 hover:bg-white/5 transition-colors">
+                        <td class="py-3 font-medium text-white">${dept.name}</td>
+                        <td class="py-3 text-right">${fmtCur(dept.actual)}</td>
+                        <td class="py-3 text-right text-slate-400">${fmtCur(dept.budget)}</td>
+                        <td class="py-3 text-right ${colorClass} font-semibold">${fmtPct(dept.achievement)}</td>
+                    </tr>
+                `;
+            });
+
+            // Render Charts
+            renderCharts(trends);
+        }
+
+        function renderCharts(trends) {
+            // Main Line/Bar Combo Chart
+            const ctxMain = document.getElementById('mainTrendChart').getContext('2d');
+            if(State.charts.main) State.charts.main.destroy();
+            
+            State.charts.main = new Chart(ctxMain, {
+                type: 'bar',
+                data: {
+                    labels: trends.labels,
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: 'Budget',
+                            data: trends.budget,
+                            borderColor: '#3b82f6',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.4,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Revenue Actual',
+                            data: trends.revenue,
+                            backgroundColor: '#10b981', // Emerald
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Expenses',
+                            data: trends.expenses,
+                            backgroundColor: '#f43f5e', // Rose
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } },
+                        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', titleColor: '#fff', padding: 12 }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { callback: (value) => '$' + (value/1000) + 'k' },
+                            grid: { borderDash: [4, 4] }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // Doughnut Chart (Mock Expense Categories)
+            const ctxDoughnut = document.getElementById('expenseDoughnutChart').getContext('2d');
+            if(State.charts.doughnut) State.charts.doughnut.destroy();
+            
+            State.charts.doughnut = new Chart(ctxDoughnut, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Payroll', 'Food Cost', 'Bev Cost', 'Utilities', 'Marketing'],
+                    datasets: [{
+                        data: [45, 25, 10, 15, 5],
+                        backgroundColor: ['#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#ec4899'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#cbd5e1', usePointStyle: true, padding: 20 } }
+                    }
+                }
+            });
+        }
+
+        /**
+         * ---------------------------------------------------------
+         * UTILITIES
+         * ---------------------------------------------------------
+         */
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const colors = {
+                success: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400',
+                error: 'border-rose-500/50 bg-rose-500/10 text-rose-400',
+                info: 'border-brand-500/50 bg-brand-500/10 text-brand-400'
+            };
+            const icons = {
+                success: 'check-circle', error: 'warning-circle', info: 'info'
+            };
+
+            toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-md shadow-lg transform transition-all duration-300 translate-x-full ${colors[type]}`;
+            toast.innerHTML = `<i class="ph ph-${icons[type]} text-xl"></i> <span class="font-medium text-sm text-white">${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => { toast.classList.remove('translate-x-full'); }, 10);
+            
+            // Auto remove
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function animateValue(id, end, formatter, duration = 1000) {
+            const obj = document.getElementById(id);
+            let start = 0;
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                // Ease out expo
+                const easeOut = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+                const current = Math.floor(easeOut * (end - start) + start);
+                obj.innerHTML = formatter(current);
+                if (progress < 1) window.requestAnimationFrame(step);
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function exportReport() {
+            showToast('Generating PDF Report...', 'info');
+            // Simulation for exporting since pure JS PDF requires massive libraries (jsPDF)
+            setTimeout(() => {
+                showToast('Executive_Report_2026.pdf exported successfully.', 'success');
+            }, 1500);
+        }
+
+        /**
+         * MOCK DATA GENERATOR (Fallback if GAS not connected)
+         */
+        function generateMockData(action, payload) {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    if (action === 'login') {
+                        if (payload.pin !== '123456') {
+                            reject(new Error("Invalid PIN. Please use 123456 for demonstration."));
+                            return;
+                        }
+                        resolve({
+                            token: 'mock_token', 
+                            user: { username: payload.username, role_id: 'ROLE_ADMIN' }
+                        });
+                    }
+                    else if (action === 'getDashboard') {
+                        // Generate realistic random financial data based on filters
+                        const baseRev = payload.month === 'ALL' ? 1200000 : 125000;
+                        const variance = (Math.random() * 0.2) - 0.05; // -5% to +15%
+                        
+                        const totalRevenue = baseRev * (1 + variance);
+                        const totalBudget = baseRev;
+                        const totalExpenses = totalRevenue * (0.6 + (Math.random() * 0.1)); // 60-70% expense ratio
+                        const totalLY = totalRevenue * (0.9 + (Math.random() * 0.15));
+
+                        const trends = {
+                            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                            revenue: Array.from({length: 12}, () => Math.floor(baseRev/12 * (1 + Math.random()*0.3))),
+                            expenses: Array.from({length: 12}, () => Math.floor(baseRev/12 * 0.65)),
+                            budget: Array.from({length: 12}, () => Math.floor(baseRev/12))
+                        };
+
+                        resolve({
+                            kpi: {
+                                totalRevenue,
+                                totalExpenses,
+                                totalBudget,
+                                grossProfit: totalRevenue - totalExpenses,
+                                budgetAchievement: (totalRevenue / totalBudget) * 100,
+                                growth: ((totalRevenue - totalLY) / totalLY) * 100,
+                                expenseRatio: (totalExpenses / totalRevenue) * 100,
+                                variance: totalRevenue - totalBudget
+                            },
+                            trends,
+                            departments: [
+                                { name: 'Rooms Division', actual: totalRevenue * 0.5, budget: totalBudget * 0.48, achievement: 104.1 },
+                                { name: 'Food & Beverage', actual: totalRevenue * 0.35, budget: totalBudget * 0.36, achievement: 97.2 },
+                                { name: 'Spa & Wellness', actual: totalRevenue * 0.1, budget: totalBudget * 0.1, achievement: 100.0 },
+                                { name: 'Minor Operating', actual: totalRevenue * 0.05, budget: totalBudget * 0.06, achievement: 83.3 }
+                            ],
+                            insights: [
+                                "Rooms Division led revenue generation, achieving 104.1% of targeted budget.",
+                                `Total Gross Profit margin sits healthy at ${((totalRevenue-totalExpenses)/totalRevenue*100).toFixed(1)}%.`,
+                                "Food Cost in F&B department is slightly above acceptable thresholds."
+                            ]
+                        });
+                    }
+                }, 600); // Simulate network delay
+            });
+        }
+    </script>
+</body>
+</html>
