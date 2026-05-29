@@ -704,7 +704,11 @@
                     const response = await fetch(CONFIG.GAS_API_URL, {
                         method: 'POST',
                         body: JSON.stringify({ action, payload, token: App.user ? App.user.token : null }),
-                        headers: { 'Content-Type': 'application/json' }
+                        headers: { 
+                            // PENTING: Gunakan text/plain agar tidak diblokir oleh CORS Google Apps Script
+                            'Content-Type': 'text/plain;charset=utf-8' 
+                        },
+                        redirect: 'follow'
                     });
                     return await response.json();
                 } else {
