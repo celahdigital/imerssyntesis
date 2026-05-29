@@ -126,19 +126,22 @@
                 <a href="#" onclick="App.navigate('department')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" data-view="department">
                     <i data-lucide="network" class="w-5 h-5"></i> <span class="font-medium text-sm">Department P&L</span>
                 </a>
-                <a href="#" onclick="App.navigate('ai-insight')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-purple-600 dark:hover:text-purple-400 transition-colors" data-view="ai-insight">
-                    <i data-lucide="sparkles" class="w-5 h-5"></i> <span class="font-medium text-sm">AI Insights</span>
-                </a>
                 
                 <div class="pt-6 pb-2 px-3">
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">System</p>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">System & Admin</p>
                 </div>
                 
                 <a href="#" onclick="App.navigate('upload')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 transition-colors admin-only" data-view="upload">
                     <i data-lucide="upload-cloud" class="w-5 h-5"></i> <span class="font-medium text-sm">Data Ingestion</span>
                 </a>
-                <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 transition-colors admin-only">
-                    <i data-lucide="settings" class="w-5 h-5"></i> <span class="font-medium text-sm">Mapping Engine</span>
+                <a href="#" onclick="App.navigate('mapping')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 transition-colors admin-only" data-view="mapping">
+                    <i data-lucide="git-merge" class="w-5 h-5"></i> <span class="font-medium text-sm">Mapping Engine</span>
+                </a>
+                <a href="#" onclick="App.navigate('users')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 transition-colors admin-only" data-view="users">
+                    <i data-lucide="users" class="w-5 h-5"></i> <span class="font-medium text-sm">User Management</span>
+                </a>
+                <a href="#" onclick="App.navigate('settings')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 transition-colors admin-only" data-view="settings">
+                    <i data-lucide="building" class="w-5 h-5"></i> <span class="font-medium text-sm">Hotel Settings</span>
                 </a>
             </nav>
 
@@ -281,11 +284,12 @@
                 <div id="view-department" class="view-section hidden space-y-4">
                     <div class="flex items-center gap-4 mb-4">
                         <h3 class="font-bold text-lg dark:text-white">Department Drill-down</h3>
-                        <select id="deptSelector" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 shadow-sm text-sm dark:text-white" onchange="App.loadDepartmentPnL()">
-                            <option value="ROOMS">Rooms Division</option>
-                            <option value="F&B">Food & Beverage</option>
-                            <option value="A&G">Admin & General</option>
-                            <option value="S&M">Sales & Marketing</option>
+                        <select id="deptSelector" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 shadow-sm text-sm dark:text-white" onchange="App.handleDeptChange()">
+                            <!-- Populated dynamically -->
+                        </select>
+                        <select id="outletSelector" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 shadow-sm text-sm dark:text-white hidden" onchange="App.loadDepartmentPnL()">
+                            <option value="ALL">All Outlets</option>
+                            <!-- Populated dynamically if F&B selected -->
                         </select>
                     </div>
                      <div class="glass-panel rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
@@ -307,22 +311,6 @@
                     </div>
                 </div>
 
-                <!-- VIEW: AI INSIGHTS -->
-                <div id="view-ai-insight" class="view-section hidden space-y-6">
-                    <div class="glass-panel p-6 rounded-xl border border-purple-200 dark:border-purple-900/30 shadow-sm bg-gradient-to-br from-white to-purple-50 dark:from-slate-900 dark:to-slate-800 relative overflow-hidden">
-                        <div class="absolute top-0 right-0 -mr-8 -mt-8 text-purple-500/10">
-                            <i data-lucide="bot" class="w-48 h-48"></i>
-                        </div>
-                        <h3 class="font-bold text-lg dark:text-white flex items-center gap-2 mb-6 text-purple-700 dark:text-purple-400">
-                            <i data-lucide="sparkles" class="w-5 h-5"></i> Executive Intelligence Summary
-                        </h3>
-                        
-                        <div id="aiInsightsContainer" class="space-y-4 relative z-10">
-                            <!-- Dynamic Insights -->
-                        </div>
-                    </div>
-                </div>
-
                 <!-- VIEW: UPLOAD -->
                 <div id="view-upload" class="view-section hidden space-y-6">
                     <div class="glass-panel p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm max-w-2xl mx-auto text-center">
@@ -330,19 +318,35 @@
                             <i data-lucide="upload-cloud" class="w-8 h-8 text-blue-600"></i>
                         </div>
                         <h3 class="font-bold text-xl dark:text-white mb-2">Ingest Financial Data</h3>
-                        <p class="text-slate-500 text-sm mb-8">Upload Trial Balance ending balances or Budget mapping Excel files to update the reporting engine.</p>
+                        <p class="text-slate-500 text-sm mb-6">Upload Trial Balance ending balances or Budget mapping Excel files to update the reporting engine.</p>
                         
                         <div class="flex flex-col gap-4">
-                            <select id="uploadType" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-3 shadow-sm text-sm dark:text-white w-full">
-                                <option value="ACTUAL">Actuals (Trial Balance)</option>
-                                <option value="BUDGET">Forecast / Budget</option>
-                                <option value="KPI">Operational KPI</option>
-                            </select>
+                            <div class="flex justify-center gap-4 mb-2">
+                                <button onclick="App.downloadTemplate('TB')" class="text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-md flex items-center gap-1 border border-blue-200 transition-colors">
+                                    <i data-lucide="download" class="w-3 h-3"></i> Trial Balance Template
+                                </button>
+                                <button onclick="App.downloadTemplate('BUDGET')" class="text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-md flex items-center gap-1 border border-emerald-200 transition-colors">
+                                    <i data-lucide="download" class="w-3 h-3"></i> Budget (12-Mo) Template
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <select id="uploadType" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-3 shadow-sm text-sm dark:text-white w-full focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="ACTUAL">Actuals (Trial Balance)</option>
+                                    <option value="KPI">Operational KPI</option>
+                                </select>
+                                <select id="budgetTypeSelector" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-3 shadow-sm text-sm dark:text-white w-full focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="">-- If Budget, select Type --</option>
+                                    <option value="OWNER">Owner Budget</option>
+                                    <option value="CORPORATE">Corporate Budget</option>
+                                    <option value="FORECAST">Forecast</option>
+                                </select>
+                            </div>
                             
-                            <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 hover:border-blue-500 transition-colors cursor-pointer bg-slate-50 dark:bg-slate-900/50">
+                            <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 hover:border-blue-500 transition-colors cursor-pointer bg-slate-50 dark:bg-slate-900/50 group">
                                 <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
                                 <label for="fileInput" class="cursor-pointer flex flex-col items-center">
-                                    <i data-lucide="file-text" class="w-8 h-8 text-slate-400 mb-2"></i>
+                                    <i data-lucide="file-text" class="w-8 h-8 text-slate-400 mb-2 group-hover:text-blue-500 transition-colors"></i>
                                     <span class="text-sm font-medium text-blue-600">Click to select file</span>
                                     <span class="text-xs text-slate-400 mt-1">XLSX, CSV up to 10MB</span>
                                 </label>
@@ -351,6 +355,66 @@
                             <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-all shadow-md w-full">
                                 Process & Ingest
                             </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: MAPPING ENGINE -->
+                <div id="view-mapping" class="view-section hidden space-y-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg dark:text-white">Chart of Accounts Mapping</h3>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                            <i data-lucide="plus" class="w-4 h-4"></i> New Map
+                        </button>
+                    </div>
+                    <div class="glass-panel rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-8 text-center">
+                        <i data-lucide="git-merge" class="w-12 h-12 text-slate-300 mx-auto mb-4"></i>
+                        <h4 class="text-slate-600 dark:text-slate-400 font-medium">Mapping Data Grid</h4>
+                        <p class="text-sm text-slate-400 mt-2">Connects to GL_MAPPING sheet in database.</p>
+                    </div>
+                </div>
+
+                <!-- VIEW: USER MANAGEMENT -->
+                <div id="view-users" class="view-section hidden space-y-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg dark:text-white">User Management</h3>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                            <i data-lucide="user-plus" class="w-4 h-4"></i> Add User
+                        </button>
+                    </div>
+                    <div class="glass-panel rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-8 text-center">
+                        <i data-lucide="users" class="w-12 h-12 text-slate-300 mx-auto mb-4"></i>
+                        <h4 class="text-slate-600 dark:text-slate-400 font-medium">User Database Grid</h4>
+                        <p class="text-sm text-slate-400 mt-2">Connects to USERS and ROLES sheets in database.</p>
+                    </div>
+                </div>
+
+                <!-- VIEW: HOTEL SETTINGS -->
+                <div id="view-settings" class="view-section hidden space-y-4">
+                    <div class="flex items-center gap-4 mb-4">
+                        <h3 class="font-bold text-lg dark:text-white">Hotel Profile Configuration</h3>
+                    </div>
+                    <div class="glass-panel rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 max-w-3xl">
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Hotel Name</label>
+                                <input type="text" value="Grand iMers Hotel" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">General Manager Name</label>
+                                <input type="text" value="John Doe" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Total Rooms</label>
+                                <input type="number" value="250" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Base Currency</label>
+                                <input type="text" value="IDR" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-all shadow-sm">Save Profile</button>
                         </div>
                     </div>
                 </div>
@@ -385,6 +449,7 @@
             currentView: 'dashboard',
             theme: 'light',
             charts: {},
+            systemData: { departments: [], outlets: [] }, // Store dynamic data
 
             init: function() {
                 lucide.createIcons();
@@ -445,7 +510,7 @@
                         document.getElementById('loginView').classList.add('hidden');
                         document.getElementById('appWrapper').classList.remove('hidden');
                         
-                        this.loadData(); // Load initial dashboard
+                        this.initSystemData(); // Fetch depts & outlets
                     } else {
                         throw new Error(res.message);
                     }
@@ -502,12 +567,78 @@
                     'dashboard': 'Executive Dashboard',
                     'financial': 'Consolidated Financials',
                     'department': 'Department Analytics',
-                    'ai-insight': 'AI Intelligence',
-                    'upload': 'Data Ingestion'
+                    'upload': 'Data Ingestion',
+                    'mapping': 'Mapping Engine',
+                    'users': 'User Management',
+                    'settings': 'Hotel Configuration'
                 };
                 document.getElementById('pageTitle').innerText = titles[viewName];
 
                 this.loadData(); // Fetch contextual data
+            },
+
+            initSystemData: async function() {
+                try {
+                    const res = await API.post('get_system_data', {});
+                    if(res.status === 'success') {
+                        this.systemData = res.data;
+                        this.populateDeptDropdown();
+                    }
+                    this.loadData(); // Load initial dashboard after system data is ready
+                } catch (e) { console.error("Failed to load system data", e); }
+            },
+
+            populateDeptDropdown: function() {
+                const select = document.getElementById('deptSelector');
+                select.innerHTML = '';
+                this.systemData.departments.forEach(d => {
+                    select.innerHTML += `<option value="${d.id}">${d.name}</option>`;
+                });
+                this.handleDeptChange(); // Trigger outlet logic
+            },
+
+            handleDeptChange: function() {
+                const deptId = document.getElementById('deptSelector').value;
+                const outletSelect = document.getElementById('outletSelector');
+                
+                // Find outlets for this dept
+                const deptOutlets = this.systemData.outlets.filter(o => o.department_id === deptId);
+                
+                if (deptOutlets.length > 0) {
+                    outletSelect.innerHTML = `<option value="ALL">All Outlets</option>`;
+                    deptOutlets.forEach(o => {
+                        outletSelect.innerHTML += `<option value="${o.id}">${o.name}</option>`;
+                    });
+                    outletSelect.classList.remove('hidden');
+                } else {
+                    outletSelect.classList.add('hidden');
+                }
+                
+                this.loadDepartmentPnL();
+            },
+
+            downloadTemplate: function(type) {
+                let csvContent = "data:text/csv;charset=utf-8,";
+                let filename = "";
+
+                if (type === 'TB') {
+                    csvContent += "gl_code,gl_name,ending_balance\n";
+                    csvContent += "10-200-101,FO Supplies,1500000\n";
+                    csvContent += "10-300-101,HK Supplies,2000000\n";
+                    filename = "iMers_TrialBalance_Template.csv";
+                } else if (type === 'BUDGET') {
+                    csvContent += "gl_code,gl_name,jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec\n";
+                    csvContent += "10-200-101,FO Supplies,1000,1000,1200,1000,1500,1000,1000,1000,1000,1000,1000,2000\n";
+                    filename = "iMers_Budget_12Month_Template.csv";
+                }
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", filename);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             },
 
             showLoader: function(show) {
@@ -518,6 +649,9 @@
 
             loadData: async function() {
                 const period = document.getElementById('periodSelector').value;
+                // Don't fetch if no user or on static pages
+                if (!this.user || ['mapping', 'users', 'settings', 'upload'].includes(this.currentView)) return;
+
                 this.showLoader(true);
                 
                 try {
@@ -529,9 +663,6 @@
                         this.renderPnL(res.data, 'pnlTableBody');
                     } else if (this.currentView === 'department') {
                         this.loadDepartmentPnL();
-                    } else if (this.currentView === 'ai-insight') {
-                        const res = await API.post('get_ai_insights', { period });
-                        this.renderAIInsights(res.data);
                     }
                 } catch(e) {
                     console.error(e);
@@ -543,9 +674,21 @@
             loadDepartmentPnL: async function() {
                 const period = document.getElementById('periodSelector').value;
                 const dept = document.getElementById('deptSelector').value;
+                const outlet = document.getElementById('outletSelector').value;
+                
+                if(!dept) return; // Wait for system data
+                
                 this.showLoader(true);
                 try {
-                    const res = await API.post('get_pnl', { period, filterType: 'DEPARTMENT', filterId: dept });
+                    let filterType = 'DEPARTMENT';
+                    let filterId = dept;
+                    
+                    if (outlet && outlet !== 'ALL' && !document.getElementById('outletSelector').classList.contains('hidden')) {
+                        filterType = 'OUTLET';
+                        filterId = outlet;
+                    }
+
+                    const res = await API.post('get_pnl', { period, filterType: filterType, filterId: filterId });
                     this.renderPnL(res.data, 'deptTableBody');
                 } catch(e) {
                     console.error(e);
@@ -741,6 +884,21 @@
                             gopTrend: [1.2, 1.3, 1.4, 1.3, 1.6, 1.8],
                             months: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May']
                         }
+                    }};
+                }
+                if (action === 'get_system_data') {
+                    return { status: 'success', data: {
+                        departments: [
+                            { id: 'ROOMS', name: 'Rooms Division' },
+                            { id: 'FNB', name: 'Food & Beverage' },
+                            { id: 'SMM', name: 'Sales & Marketing' },
+                            { id: 'AAG', name: 'Admin & General' }
+                        ],
+                        outlets: [
+                            { id: 'OUT_REST', department_id: 'FNB', name: 'Capriccio Restaurant' },
+                            { id: 'OUT_BAR', department_id: 'FNB', name: 'Mahoni Bar' },
+                            { id: 'OUT_BQ', department_id: 'FNB', name: 'Banquet & Event' }
+                        ]
                     }};
                 }
                 if (action === 'get_pnl') {
