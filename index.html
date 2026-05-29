@@ -1,303 +1,356 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMers Income Synthesis | P&L Reports</title>
-    
+    <title>iMers Income Synthesis - Executive Dashboard</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        brand: { 500: '#3b82f6', 600: '#2563eb' },
-                        dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155' }
+                        hotel: {
+                            900: '#0F172A',
+                            800: '#1E293B',
+                            700: '#334155',
+                            600: '#475569',
+                            brand: '#3B82F6', // Blue accent
+                            gold: '#D4AF37'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
-    
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-
     <style>
-        .glass { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .glass-card { background: linear-gradient(145deg, rgba(30,41,59,0.9) 0%, rgba(15,23,42,0.95) 100%); box-shadow: 0 8px 32px 0 rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        .view-section { display: none; }
-        .view-section.active { display: block; animation: fadeIn 0.3s ease-out; }
-        #view-login.active { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; }
+        .dark body { background-color: #0F172A; color: #F1F5F9; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .dark .glass-panel { background: rgba(30, 41, 59, 0.95); border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Custom Scrollbar for tables */
+        .table-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .table-scroll::-webkit-scrollbar-track { background: transparent; }
+        .table-scroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+        .dark .table-scroll::-webkit-scrollbar-thumb { background: #475569; }
 
-        /* Print CSS - Cleans up UI for PDF generation */
-        @media print {
-            body { background: white !important; color: black !important; }
-            .no-print, aside, header, #toast-container { display: none !important; }
-            main { margin: 0 !important; padding: 0 !important; width: 100% !important; overflow: visible !important; }
-            .glass-card, .glass { background: transparent !important; box-shadow: none !important; border: none !important; color: black !important; }
-            * { color: black !important; border-color: #ccc !important; }
-            table { width: 100% !important; border-collapse: collapse; }
-            th, td { border-bottom: 1px solid #ddd !important; padding: 6px !important; font-size: 11px !important; }
-            th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
-            .text-emerald-400, .text-rose-400 { color: black !important; }
-        }
+        /* Loader */
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3B82F6; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="bg-dark-900 text-slate-200 font-sans h-screen overflow-hidden flex">
+<body class="text-slate-800 antialiased transition-colors duration-300">
 
-    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 no-print"></div>
-
-    <!-- LOGIN -->
-    <div id="view-login" class="view-section active fixed inset-0 z-50 bg-dark-900 flex items-center justify-center bg-[url('https://images.unsplash.com/photo-1542314831-c6a4d27ce669?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center no-print">
-        <div class="absolute inset-0 bg-dark-900/85 backdrop-blur-md"></div>
-        <div class="glass-card w-full max-w-sm p-8 rounded-2xl relative z-10 mx-4 shadow-2xl">
-            <div class="text-center mb-8">
-                <h1 class="text-2xl font-bold text-white tracking-tight">iMers<span class="font-light text-brand-500">Report</span></h1>
-                <p class="text-slate-400 text-sm mt-1">Executive P&L Portal</p>
+    <!-- LOGIN SCREEN -->
+    <div id="loginView" class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-slate-900 dark:via-purple-900/20 dark:to-slate-900 hidden">
+        <div class="bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl p-10 rounded-[2rem] shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)] dark:shadow-[0_20px_50px_rgba(0,_0,_0,_0.5)] border border-white/50 dark:border-slate-700/50 w-full max-w-md text-center transform transition-all">
+            
+            <!-- Logo Icon -->
+            <div class="mb-8 flex justify-center">
+                <div class="w-20 h-20 bg-gradient-to-tr from-blue-600 to-violet-500 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/30 transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                    <i data-lucide="building-2" class="w-10 h-10 text-white transform -rotate-3"></i>
+                </div>
             </div>
-            <form class="space-y-5" id="form-login" onsubmit="handleLogin(event)">
-                <div>
-                    <div class="relative">
-                        <i class="ph ph-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="login-user" required class="w-full bg-dark-800/80 border border-slate-700 rounded-lg py-2.5 pl-10 pr-4 text-white focus:border-brand-500 outline-none" placeholder="Username (ex: admin)">
+            
+            <!-- Title with Gradient Text (Memperbaiki isu di gambar) -->
+            <h1 class="text-4xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-violet-700 dark:from-blue-400 dark:to-violet-400">iMers</h1>
+            <p class="text-slate-500 dark:text-slate-400 mb-8 text-sm font-bold tracking-[0.3em] uppercase">Income Synthesis</p>
+            
+            <div class="space-y-5">
+                <!-- Username Input (Baru) -->
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i data-lucide="user" class="w-5 h-5 text-slate-400"></i>
                     </div>
+                    <input type="text" id="usernameInput" placeholder="Username" autocomplete="off"
+                           class="w-full bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white pl-12 pr-4 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all placeholder-slate-400 font-medium">
                 </div>
-                <div>
-                    <div class="relative">
-                        <i class="ph ph-lock-key absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="password" id="login-pin" required pattern="[0-9]{6}" class="w-full bg-dark-800/80 border border-slate-700 rounded-lg py-2.5 pl-10 pr-4 text-white focus:border-brand-500 outline-none tracking-[0.3em]" placeholder="6-Digit PIN">
+                
+                <!-- PIN Input -->
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i data-lucide="lock" class="w-5 h-5 text-slate-400"></i>
                     </div>
+                    <input type="password" id="pinInput" placeholder="Secure PIN" maxlength="6"
+                           class="w-full text-center text-xl tracking-[0.5em] font-mono bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white pl-12 pr-4 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all placeholder-slate-400">
                 </div>
-                <button type="submit" id="btn-login" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2">
-                    <i class="ph ph-sign-in font-bold"></i> <span>Access Portal</span>
+
+                <button onclick="App.login()" class="w-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-violet-500/30 flex justify-center items-center gap-2 mt-2">
+                    <span id="loginText">Secure Access</span>
+                    <div id="loginLoader" class="loader hidden border-white border-top-transparent w-5 h-5"></div>
                 </button>
-            </form>
+                <p id="loginError" class="text-rose-500 text-sm h-4 hidden font-medium">Invalid Credentials</p>
+            </div>
+            <p class="mt-10 text-xs text-slate-400 font-medium tracking-wide">EXECUTIVE HOSPITALITY INTELLIGENCE</p>
         </div>
     </div>
 
-    <!-- APP LAYOUT -->
-    <div id="app-layout" class="hidden w-full h-full flex">
+    <!-- MAIN APP WRAPPER -->
+    <div id="appWrapper" class="flex h-screen overflow-hidden hidden">
         
         <!-- SIDEBAR -->
-        <aside class="w-64 glass border-r border-slate-700/50 flex flex-col flex-shrink-0 z-20 no-print h-full">
-            <div class="h-16 flex items-center px-6 border-b border-slate-700/50 shrink-0">
-                <span class="text-lg font-bold text-white tracking-wide">iMers<span class="font-light text-brand-500">Report</span></span>
+        <aside class="w-64 glass-panel border-r border-slate-200 dark:border-slate-800 flex flex-col z-20">
+            <div class="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-800">
+                <i data-lucide="building-2" class="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3"></i>
+                <span class="font-bold text-lg tracking-tight dark:text-white">iMers <span class="font-light text-slate-500">BI</span></span>
             </div>
             
-            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1" id="sidebar-nav">
-                <a href="#" onclick="navigate('dashboard')" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors" data-target="dashboard">
-                    <i class="ph ph-squares-four text-lg"></i> Executive Summary
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold">
+                    <span id="userInitials">GM</span>
+                </div>
+                <div class="flex-1 overflow-hidden">
+                    <p id="userName" class="text-sm font-semibold truncate dark:text-white">John Doe</p>
+                    <p id="userRole" class="text-xs text-slate-500 truncate">General Manager</p>
+                </div>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                <a href="#" onclick="App.navigate('dashboard')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" data-view="dashboard">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span class="font-medium text-sm">Executive Board</span>
+                </a>
+                <a href="#" onclick="App.navigate('financial')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" data-view="financial">
+                    <i data-lucide="file-spreadsheet" class="w-5 h-5"></i> <span class="font-medium text-sm">Consolidated P&L</span>
+                </a>
+                <a href="#" onclick="App.navigate('department')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" data-view="department">
+                    <i data-lucide="network" class="w-5 h-5"></i> <span class="font-medium text-sm">Department P&L</span>
+                </a>
+                <a href="#" onclick="App.navigate('ai-insight')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-purple-600 dark:hover:text-purple-400 transition-colors" data-view="ai-insight">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i> <span class="font-medium text-sm">AI Insights</span>
                 </a>
                 
-                <div class="text-xs font-semibold text-slate-500 uppercase mt-6 mb-2 px-3">Front Office (P&L)</div>
-                <div id="menu-front-office" class="space-y-1"></div>
-
-                <div class="text-xs font-semibold text-slate-500 uppercase mt-6 mb-2 px-3">Back Office (Expenses)</div>
-                <div id="menu-back-office" class="space-y-1"></div>
+                <div class="pt-6 pb-2 px-3">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">System</p>
+                </div>
                 
-                <div class="text-xs font-semibold text-slate-500 uppercase mt-6 mb-2 px-3">System</div>
-                <a href="#" onclick="navigate('settings')" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors" data-target="settings">
-                    <i class="ph ph-gear text-lg"></i> User & Settings
+                <a href="#" onclick="App.navigate('upload')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 transition-colors admin-only" data-view="upload">
+                    <i data-lucide="upload-cloud" class="w-5 h-5"></i> <span class="font-medium text-sm">Data Ingestion</span>
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 transition-colors admin-only">
+                    <i data-lucide="settings" class="w-5 h-5"></i> <span class="font-medium text-sm">Mapping Engine</span>
                 </a>
             </nav>
 
-            <div class="p-4 border-t border-slate-700/50 shrink-0">
-                <div class="flex items-center gap-3">
-                    <div class="flex-1 min-w-0">
-                        <p id="curr-user" class="text-sm font-medium text-white truncate">User</p>
-                        <p id="curr-role" class="text-xs text-slate-400 truncate">Role</p>
-                    </div>
-                    <button onclick="logout()" class="text-slate-400 hover:text-rose-400"><i class="ph ph-sign-out text-xl"></i></button>
-                </div>
+            <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+                <button onclick="App.logout()" class="flex items-center gap-2 text-sm text-slate-500 hover:text-red-500 transition-colors w-full">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Secure Logout
+                </button>
             </div>
         </aside>
 
-        <!-- MAIN -->
-        <main class="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-dark-900">
-            <!-- TOPNAV -->
-            <header class="h-16 border-b border-slate-700/50 flex items-center justify-between px-6 shrink-0 no-print glass">
-                <div class="flex items-center gap-3">
-                    <div class="flex items-center gap-2 bg-dark-800 border border-slate-700 rounded-lg px-3 py-1.5">
-                        <i class="ph ph-calendar text-slate-400"></i>
-                        <select id="filter-month" onchange="refreshCurrentView()" class="bg-transparent border-none text-sm text-white focus:outline-none cursor-pointer">
-                            <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
-                            <option value="4">Apr</option><option value="5" selected>May</option><option value="6">Jun</option>
-                            <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
-                            <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
-                        </select>
-                        <span class="text-slate-600">/</span>
-                        <select id="filter-year" onchange="refreshCurrentView()" class="bg-transparent border-none text-sm text-white focus:outline-none cursor-pointer">
-                            <option value="2026" selected>2026</option>
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-hotel-900 relative">
+            
+            <!-- HEADER -->
+            <header class="h-16 glass-panel border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 z-10">
+                <div>
+                    <h2 id="pageTitle" class="text-xl font-bold dark:text-white">Executive Dashboard</h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 shadow-sm">
+                        <i data-lucide="calendar" class="w-4 h-4 text-slate-500"></i>
+                        <select id="periodSelector" class="bg-transparent text-sm font-medium focus:outline-none dark:text-white cursor-pointer" onchange="App.loadData()">
+                            <option value="2026-05">May 2026</option>
+                            <option value="2026-04">April 2026</option>
+                            <option value="2026-03">March 2026</option>
                         </select>
                     </div>
-                </div>
-                <div>
-                    <button onclick="window.print()" class="flex items-center gap-2 text-sm bg-brand-600 hover:bg-brand-500 text-white px-4 py-1.5 rounded-lg transition-colors">
-                        <i class="ph ph-printer"></i> Print PDF
+                    <button onclick="App.toggleTheme()" class="p-2 rounded-lg text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                        <i data-lucide="moon" id="themeIcon" class="w-5 h-5"></i>
                     </button>
                 </div>
             </header>
 
-            <div class="flex-1 overflow-y-auto p-6 relative bg-dark-900" id="main-scroll">
+            <!-- SCROLLABLE CONTENT AREA -->
+            <div class="flex-1 overflow-y-auto p-6 relative">
                 
-                <!-- EXECUTIVE DASHBOARD -->
-                <div id="view-dashboard" class="view-section active space-y-6">
-                    <div>
-                        <h2 class="text-2xl font-bold text-white">Executive Summary</h2>
-                        <p class="text-slate-400 text-sm">Consolidated Financial & Statistics</p>
-                    </div>
-
-                    <!-- KPI Statistics -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="glass-card p-4 rounded-xl border-l-2 border-brand-500">
-                            <p class="text-xs text-slate-400 uppercase">Occupancy</p>
-                            <h3 class="text-xl font-bold text-white mt-1" id="stat-occ">0%</h3>
-                        </div>
-                        <div class="glass-card p-4 rounded-xl border-l-2 border-brand-500">
-                            <p class="text-xs text-slate-400 uppercase">Avg Room Rate</p>
-                            <h3 class="text-xl font-bold text-white mt-1" id="stat-arr">$0</h3>
-                        </div>
-                        <div class="glass-card p-4 rounded-xl border-l-2 border-brand-500">
-                            <p class="text-xs text-slate-400 uppercase">Guest Spending</p>
-                            <h3 class="text-xl font-bold text-white mt-1" id="stat-spend">$0</h3>
-                        </div>
-                        <div class="glass-card p-4 rounded-xl border-l-2 border-slate-500">
-                            <p class="text-xs text-slate-400 uppercase">Total Headcount</p>
-                            <h3 class="text-xl font-bold text-white mt-1" id="stat-hc">0</h3>
-                        </div>
-                    </div>
-
-                    <!-- Consolidated P&L summary -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="glass-card p-5 rounded-xl border border-slate-700">
-                            <h3 class="text-slate-300 font-medium mb-4 border-b border-slate-700 pb-2">Total Revenue</h3>
-                            <div class="flex justify-between items-end mb-2">
-                                <span class="text-sm text-slate-400">MTD Actual</span>
-                                <span class="text-lg font-bold text-emerald-400" id="sum-mtd-rev">$0</span>
-                            </div>
-                            <div class="flex justify-between items-end mb-2">
-                                <span class="text-sm text-slate-400">YTD Actual</span>
-                                <span class="text-lg font-bold text-emerald-500" id="sum-ytd-rev">$0</span>
-                            </div>
-                            <div class="flex justify-between items-end pt-2 border-t border-slate-700">
-                                <span class="text-xs text-slate-500">YTD Budget Target</span>
-                                <span class="text-xs text-slate-400" id="sum-ytd-budrev">$0</span>
-                            </div>
-                        </div>
-
-                        <div class="glass-card p-5 rounded-xl border border-slate-700">
-                            <h3 class="text-slate-300 font-medium mb-4 border-b border-slate-700 pb-2">Total Expenses</h3>
-                            <div class="flex justify-between items-end mb-2">
-                                <span class="text-sm text-slate-400">MTD Actual</span>
-                                <span class="text-lg font-bold text-rose-400" id="sum-mtd-exp">$0</span>
-                            </div>
-                            <div class="flex justify-between items-end mb-2">
-                                <span class="text-sm text-slate-400">YTD Actual</span>
-                                <span class="text-lg font-bold text-rose-500" id="sum-ytd-exp">$0</span>
-                            </div>
-                            <div class="flex justify-between items-end pt-2 border-t border-slate-700">
-                                <span class="text-xs text-slate-500">YTD Budget Limit</span>
-                                <span class="text-xs text-slate-400" id="sum-ytd-budexp">$0</span>
-                            </div>
-                        </div>
-
-                        <div class="glass-card p-5 rounded-xl border border-slate-700 bg-brand-900/20">
-                            <h3 class="text-slate-300 font-medium mb-4 border-b border-slate-700 pb-2">Gross Profit (GOP)</h3>
-                            <div class="flex justify-between items-end mb-2">
-                                <span class="text-sm text-slate-400">MTD Profit</span>
-                                <span class="text-lg font-bold text-white" id="sum-mtd-prof">$0</span>
-                            </div>
-                            <div class="flex justify-between items-end mb-2">
-                                <span class="text-sm text-slate-400">YTD Profit</span>
-                                <span class="text-lg font-bold text-white" id="sum-ytd-prof">$0</span>
-                            </div>
-                        </div>
+                <!-- Loading Overlay -->
+                <div id="contentLoader" class="absolute inset-0 bg-slate-50/80 dark:bg-hotel-900/80 z-50 flex items-center justify-center backdrop-blur-sm hidden">
+                    <div class="flex flex-col items-center">
+                        <div class="loader mb-4 border-blue-600 border-top-transparent"></div>
+                        <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Synthesizing Data...</p>
                     </div>
                 </div>
 
-                <!-- P&L REPORT VIEW -->
-                <div id="view-report" class="view-section space-y-4">
-                    <div class="mb-6 border-b border-slate-700/50 pb-4">
-                        <h2 class="text-2xl font-bold text-white" id="rep-title">Department P&L</h2>
-                        <p class="text-slate-400 text-sm" id="rep-subtitle">Period: May 2026</p>
-                    </div>
+                <!-- VIEW: DASHBOARD -->
+                <div id="view-dashboard" class="view-section space-y-6">
+                    <!-- KPI Cards Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Revenue -->
+                        <div class="glass-panel p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                            <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">Total Revenue</p>
+                            <h3 class="text-2xl font-bold dark:text-white mb-2" id="kpiRev">Rp 0</h3>
+                            <div class="flex items-center text-xs font-medium">
+                                <span class="flex items-center text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded mr-2" id="kpiRevVar">
+                                    <i data-lucide="trending-up" class="w-3 h-3 mr-1"></i> 0%
+                                </span>
+                                <span class="text-slate-400">vs Budget</span>
+                            </div>
+                        </div>
+                        
+                        <!-- GOP -->
+                        <div class="glass-panel p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                            <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">Gross Operating Profit</p>
+                            <h3 class="text-2xl font-bold dark:text-white mb-2" id="kpiGop">Rp 0</h3>
+                            <div class="flex items-center text-xs font-medium">
+                                <span class="text-slate-600 dark:text-slate-300 mr-2" id="kpiGopMargin">Margin: 0%</span>
+                            </div>
+                        </div>
 
-                    <!-- Revenue Section -->
-                    <div id="rep-rev-section" class="mb-8">
-                        <h3 class="text-lg font-semibold text-emerald-400 mb-2 uppercase text-sm tracking-wider">Revenues</h3>
-                        <div class="glass-card rounded-xl overflow-hidden overflow-x-auto border border-slate-700">
-                            <table class="w-full text-left text-sm whitespace-nowrap">
-                                <thead class="bg-slate-800/50 text-slate-400 border-b border-slate-700">
-                                    <tr>
-                                        <th class="px-4 py-3 font-medium">Account</th>
-                                        <th class="px-4 py-3 font-medium text-right">MTD Actual</th>
-                                        <th class="px-4 py-3 font-medium text-right">MTD Budget</th>
-                                        <th class="px-4 py-3 font-medium text-right">MTD Ach%</th>
-                                        <th class="px-4 py-3 font-medium text-right border-l border-slate-700">YTD Actual</th>
-                                        <th class="px-4 py-3 font-medium text-right">YTD Budget</th>
-                                        <th class="px-4 py-3 font-medium text-right">YTD Ach%</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tbody-rev" class="divide-y divide-slate-700/50"></tbody>
-                                <tfoot id="tfoot-rev" class="bg-slate-800/80 font-bold text-white border-t-2 border-slate-600"></tfoot>
-                            </table>
+                        <!-- Occupancy -->
+                        <div class="glass-panel p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                            <div class="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">Occupancy</p>
+                            <h3 class="text-2xl font-bold dark:text-white mb-2" id="kpiOcc">0%</h3>
+                            <div class="flex items-center text-xs font-medium">
+                                <span class="text-slate-400">Target: <span id="kpiOccTarget">0%</span></span>
+                            </div>
+                        </div>
+
+                        <!-- RevPAR -->
+                        <div class="glass-panel p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                            <div class="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">RevPAR</p>
+                            <h3 class="text-2xl font-bold dark:text-white mb-2" id="kpiRevpar">Rp 0</h3>
+                            <div class="flex items-center text-xs font-medium">
+                                <span class="text-slate-400">ARR: <span id="kpiArr" class="text-slate-600 dark:text-slate-300">Rp 0</span></span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Expense Section -->
-                    <div id="rep-exp-section" class="mb-8">
-                        <h3 class="text-lg font-semibold text-rose-400 mb-2 uppercase text-sm tracking-wider">Expenses</h3>
-                        <div class="glass-card rounded-xl overflow-hidden overflow-x-auto border border-slate-700">
-                            <table class="w-full text-left text-sm whitespace-nowrap">
-                                <thead class="bg-slate-800/50 text-slate-400 border-b border-slate-700">
-                                    <tr>
-                                        <th class="px-4 py-3 font-medium">Account</th>
-                                        <th class="px-4 py-3 font-medium text-right">MTD Actual</th>
-                                        <th class="px-4 py-3 font-medium text-right">MTD Budget</th>
-                                        <th class="px-4 py-3 font-medium text-right">MTD Ach%</th>
-                                        <th class="px-4 py-3 font-medium text-right border-l border-slate-700">YTD Actual</th>
-                                        <th class="px-4 py-3 font-medium text-right">YTD Budget</th>
-                                        <th class="px-4 py-3 font-medium text-right">YTD Ach%</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tbody-exp" class="divide-y divide-slate-700/50"></tbody>
-                                <tfoot id="tfoot-exp" class="bg-slate-800/80 font-bold text-white border-t-2 border-slate-600"></tfoot>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SETTINGS & USER MANAGEMENT -->
-                <div id="view-settings" class="view-section space-y-8">
-                    <h2 class="text-2xl font-bold text-white">System Settings</h2>
-                    
+                    <!-- Charts Row -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- Change PIN -->
-                        <div class="glass-card p-6 rounded-xl border border-slate-700">
-                            <h3 class="text-lg font-semibold text-white mb-4"><i class="ph ph-lock-key text-brand-500"></i> Change My PIN</h3>
-                            <form onsubmit="doChangePin(event)" class="space-y-4">
-                                <div><label class="text-xs text-slate-400">Current PIN</label><input type="password" id="pin-old" required class="w-full bg-dark-800 border border-slate-600 rounded p-2 text-white"></div>
-                                <div><label class="text-xs text-slate-400">New 6-Digit PIN</label><input type="password" id="pin-new" required pattern="[0-9]{6}" class="w-full bg-dark-800 border border-slate-600 rounded p-2 text-white tracking-widest"></div>
-                                <button type="submit" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded">Update PIN</button>
-                            </form>
+                        <div class="glass-panel p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <h4 class="text-base font-bold dark:text-white mb-4">Revenue Trend (YTD)</h4>
+                            <div class="h-64 w-full relative">
+                                <canvas id="chartRevenue"></canvas>
+                            </div>
                         </div>
+                        <div class="glass-panel p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <h4 class="text-base font-bold dark:text-white mb-4">GOP vs Budget</h4>
+                            <div class="h-64 w-full relative">
+                                <canvas id="chartGop"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                        <!-- Admin Create User -->
-                        <div id="admin-panel" class="glass-card p-6 rounded-xl border border-brand-500/50 hidden">
-                            <h3 class="text-lg font-semibold text-white mb-4"><i class="ph ph-shield-check text-brand-500"></i> Create New User</h3>
-                            <form onsubmit="doCreateUser(event)" class="space-y-4">
-                                <div><label class="text-xs text-slate-400">Username</label><input type="text" id="nu-name" required class="w-full bg-dark-800 border border-slate-600 rounded p-2 text-white"></div>
-                                <div><label class="text-xs text-slate-400">Initial PIN</label><input type="text" id="nu-pin" required pattern="[0-9]{6}" value="123456" class="w-full bg-dark-800 border border-slate-600 rounded p-2 text-white tracking-widest"></div>
-                                <div><label class="text-xs text-slate-400">Role</label>
-                                    <select id="nu-role" class="w-full bg-dark-800 border border-slate-600 rounded p-2 text-white">
-                                        <option value="ROLE_VIEWER">Viewer</option><option value="ROLE_ADMIN">Admin</option>
-                                    </select>
-                                </div>
-                                <button type="submit" class="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded">Create User</button>
-                            </form>
+                <!-- VIEW: FINANCIAL (P&L) -->
+                <div id="view-financial" class="view-section hidden space-y-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg dark:text-white">Hotel Consolidated Statement</h3>
+                        <button class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2 border border-slate-200 dark:border-slate-700">
+                            <i data-lucide="download" class="w-4 h-4"></i> Export PDF
+                        </button>
+                    </div>
+
+                    <div class="glass-panel rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                        <div class="table-scroll overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-4 font-semibold">Description</th>
+                                        <th scope="col" class="px-4 py-4 text-right font-semibold">Actual</th>
+                                        <th scope="col" class="px-4 py-4 text-right font-semibold">Budget</th>
+                                        <th scope="col" class="px-4 py-4 text-right font-semibold">Var (Rp)</th>
+                                        <th scope="col" class="px-4 py-4 text-right font-semibold">Ach %</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pnlTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/50">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- VIEW: DEPARTMENT P&L -->
+                <div id="view-department" class="view-section hidden space-y-4">
+                    <div class="flex items-center gap-4 mb-4">
+                        <h3 class="font-bold text-lg dark:text-white">Department Drill-down</h3>
+                        <select id="deptSelector" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 shadow-sm text-sm dark:text-white" onchange="App.loadDepartmentPnL()">
+                            <option value="ROOMS">Rooms Division</option>
+                            <option value="F&B">Food & Beverage</option>
+                            <option value="A&G">Admin & General</option>
+                            <option value="S&M">Sales & Marketing</option>
+                        </select>
+                    </div>
+                     <div class="glass-panel rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                        <div class="table-scroll overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-4 font-semibold">Category</th>
+                                        <th scope="col" class="px-4 py-4 text-right font-semibold">Actual</th>
+                                        <th scope="col" class="px-4 py-4 text-right font-semibold">Budget</th>
+                                        <th scope="col" class="px-4 py-4 text-right font-semibold">Variance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="deptTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/50">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: AI INSIGHTS -->
+                <div id="view-ai-insight" class="view-section hidden space-y-6">
+                    <div class="glass-panel p-6 rounded-xl border border-purple-200 dark:border-purple-900/30 shadow-sm bg-gradient-to-br from-white to-purple-50 dark:from-slate-900 dark:to-slate-800 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 -mr-8 -mt-8 text-purple-500/10">
+                            <i data-lucide="bot" class="w-48 h-48"></i>
+                        </div>
+                        <h3 class="font-bold text-lg dark:text-white flex items-center gap-2 mb-6 text-purple-700 dark:text-purple-400">
+                            <i data-lucide="sparkles" class="w-5 h-5"></i> Executive Intelligence Summary
+                        </h3>
+                        
+                        <div id="aiInsightsContainer" class="space-y-4 relative z-10">
+                            <!-- Dynamic Insights -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: UPLOAD -->
+                <div id="view-upload" class="view-section hidden space-y-6">
+                    <div class="glass-panel p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm max-w-2xl mx-auto text-center">
+                        <div class="w-16 h-16 bg-blue-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-100 dark:border-slate-700">
+                            <i data-lucide="upload-cloud" class="w-8 h-8 text-blue-600"></i>
+                        </div>
+                        <h3 class="font-bold text-xl dark:text-white mb-2">Ingest Financial Data</h3>
+                        <p class="text-slate-500 text-sm mb-8">Upload Trial Balance ending balances or Budget mapping Excel files to update the reporting engine.</p>
+                        
+                        <div class="flex flex-col gap-4">
+                            <select id="uploadType" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-3 shadow-sm text-sm dark:text-white w-full">
+                                <option value="ACTUAL">Actuals (Trial Balance)</option>
+                                <option value="BUDGET">Forecast / Budget</option>
+                                <option value="KPI">Operational KPI</option>
+                            </select>
+                            
+                            <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 hover:border-blue-500 transition-colors cursor-pointer bg-slate-50 dark:bg-slate-900/50">
+                                <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
+                                <label for="fileInput" class="cursor-pointer flex flex-col items-center">
+                                    <i data-lucide="file-text" class="w-8 h-8 text-slate-400 mb-2"></i>
+                                    <span class="text-sm font-medium text-blue-600">Click to select file</span>
+                                    <span class="text-xs text-slate-400 mt-1">XLSX, CSV up to 10MB</span>
+                                </label>
+                            </div>
+                            
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-all shadow-md w-full">
+                                Process & Ingest
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -306,268 +359,425 @@
         </main>
     </div>
 
+    <!-- MAIN APP SCRIPT -->
     <script>
-        // --- CORE STATE ---
-        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwh6zgP97jkvUbjohh4cE6ksHGSCbcK0FTBp0M2N82nzx4sNTVUPzXWMLQiETgbdcLwLw/exec'; 
-        
-        let State = {
-            user: JSON.parse(localStorage.getItem('imers_user') || 'null'),
-            systemMenu: { depts: [], outlets: [] },
-            currentView: 'dashboard',
-            currentDeptId: null,
-            currentOutletId: null
+        // CONFIGURATION
+        const CONFIG = {
+            // Put your deployed Google Apps Script Web App URL here
+            // If empty, the app uses the built-in Offline Mock Data Engine for demonstration.
+            GAS_API_URL: "https://script.google.com/macros/s/AKfycbwfLzmWx9f8LvfWQJT6HeqELCpkAmazEqugnlaXjouhsxMhlczFRunftIpD_10kK9j5/exec",
+            currency: 'Rp',
+            locale: 'id-ID'
         };
 
-        const fmtCur = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(num || 0);
-        const fmtPct = (num) => (num || 0).toFixed(1) + '%';
-        const fmtNum = (num) => new Intl.NumberFormat('en-US').format(num || 0);
+        // Format currency helper
+        const formatMoney = (amount) => {
+            return new Intl.NumberFormat(CONFIG.locale, { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(amount).replace('IDR', 'Rp');
+        };
 
-        // --- INIT ---
-        document.addEventListener('DOMContentLoaded', () => {
-            if (State.user) initApp();
-        });
+        const formatPct = (val) => {
+            return (val).toFixed(1) + '%';
+        };
 
-        // --- FUNGSI BYPASS INSTAN (0 DETIK TANPA LOADING) ---
-        function getInstantData(action, payload) {
-            if(action === 'getSystemMenu') {
-                return {
-                    depts: [
-                        { department_id: 'DEPT_RM', department_name: 'Rooms Division', type: 'FRONT_OFFICE' },
-                        { department_id: 'DEPT_FB', department_name: 'Food & Beverage', type: 'FRONT_OFFICE' },
-                        { department_id: 'DEPT_AOG', department_name: 'Admin & General', type: 'BACK_OFFICE' }
-                    ],
-                    outlets: [
-                        { outlet_id: 'OUT_MAH', department_id: 'DEPT_FB', outlet_name: 'Mahoni Bar' }
-                    ]
-                };
-            }
-            if(action === 'getDashboard') {
-                return {
-                    stats: { occupancy: 82.5, arr: 1150000, guest_spend: 350000, headcount: 142 },
-                    kpi: { mtdRevenue: 2500000, mtdExpense: 1200000, mtdProfit: 1300000, ytdRevenue: 12500000, ytdExpense: 5200000, ytdProfit: 7300000, ytdBudgetRev: 13000000, ytdBudgetExp: 5500000 }
-                };
-            }
-            if(action === 'getPnLReport') {
-                return {
-                    department: { department_name: 'Rooms Division', type: 'FRONT_OFFICE' },
-                    revenues: [
-                        { code: '4000', name: 'Room Revenue', mtd_actual: 1500000, mtd_budget: 1450000, mtd_ach: 103, ytd_actual: 7500000, ytd_budget: 7400000, ytd_ach: 101 }
-                    ],
-                    expenses: [
-                        { code: '5000', name: 'Payroll', mtd_actual: 400000, mtd_budget: 410000, mtd_ach: 97, ytd_actual: 2000000, ytd_budget: 2050000, ytd_ach: 97 },
-                        { code: '5200', name: 'Guest Supplies', mtd_actual: 50000, mtd_budget: 45000, mtd_ach: 111, ytd_actual: 250000, ytd_budget: 220000, ytd_ach: 113 }
-                    ]
-                };
-            }
-            return {};
-        }
+        // --- APP STATE & ENGINE ---
+        const App = {
+            user: null,
+            currentView: 'dashboard',
+            theme: 'light',
+            charts: {},
 
-        // --- API HANDLER ---
-        async function apiCall(action, payload = {}) {
-            // LANGSUNG KELUARKAN DATA SECARA INSTAN TANPA FETCH KE SERVER
-            return getInstantData(action, payload);
-        }
-
-        // --- AUTH ---
-        async function handleLogin(e) {
-            e.preventDefault();
-            
-            const username = document.getElementById('login-user').value;
-            const pin = document.getElementById('login-pin').value;
-            
-            // BYPASS LOGIN INSTAN TANPA LOADING SAMA SEKALI
-            if(username === 'admin' && pin === '123456') {
-                State.user = { username: 'admin', role: 'ROLE_ADMIN' };
-                localStorage.setItem('imers_user', JSON.stringify(State.user));
-                showToast(`Welcome, admin`, 'success');
-                initApp(); // Langsung masuk dalam 0 detik!
-            } else {
-                showToast("PIN Salah! Gunakan: admin / 123456", "error");
-            }
-        }
-
-        function logout() {
-            localStorage.removeItem('imers_user');
-            State.user = null;
-            document.getElementById('app-layout').classList.add('hidden');
-            document.getElementById('view-login').classList.add('active');
-            document.getElementById('login-pin').value = '';
-        }
-
-        // --- APP LOGIC ---
-        async function initApp() {
-            document.getElementById('view-login').classList.remove('active');
-            document.getElementById('app-layout').classList.remove('hidden');
-            document.getElementById('curr-user').innerText = State.user.username;
-            document.getElementById('curr-role').innerText = State.user.role;
-            
-            if(State.user.role === 'ROLE_ADMIN') document.getElementById('admin-panel').classList.remove('hidden');
-            
-            State.systemMenu = await apiCall('getSystemMenu');
-            renderSidebar();
-            navigate('dashboard');
-        }
-
-        function renderSidebar() {
-            const frontEl = document.getElementById('menu-front-office');
-            const backEl = document.getElementById('menu-back-office');
-            frontEl.innerHTML = ''; backEl.innerHTML = '';
-
-            State.systemMenu.depts.forEach(d => {
-                const isFront = d.type === 'FRONT_OFFICE';
-                const container = isFront ? frontEl : backEl;
+            init: function() {
+                lucide.createIcons();
+                // Check local storage theme
+                if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    this.theme = 'dark';
+                    document.documentElement.classList.add('dark');
+                    document.getElementById('themeIcon').setAttribute('data-lucide', 'sun');
+                }
                 
-                container.innerHTML += `<a href="#" onclick="loadReport('${d.department_id}', null)" class="nav-item flex items-center gap-3 px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 text-sm" data-target="rep_${d.department_id}"><i class="ph ph-folder text-lg"></i> ${d.department_name}</a>`;
+                // Show login
+                document.getElementById('loginView').classList.remove('hidden');
+                lucide.createIcons();
+            },
+
+            toggleTheme: function() {
+                this.theme = this.theme === 'dark' ? 'light' : 'dark';
+                document.documentElement.classList.toggle('dark');
+                localStorage.theme = this.theme;
                 
-                if(isFront) {
-                    const childOutlets = State.systemMenu.outlets.filter(o => o.department_id === d.department_id);
-                    childOutlets.forEach(o => {
-                        container.innerHTML += `<a href="#" onclick="loadReport('${d.department_id}', '${o.outlet_id}')" class="nav-item flex items-center gap-3 px-3 py-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/5 text-sm pl-8" data-target="rep_${o.outlet_id}"><i class="ph ph-coffee"></i> ${o.outlet_name}</a>`;
+                // Update icon
+                const iconNode = document.getElementById('themeIcon');
+                if(this.theme === 'dark') {
+                    iconNode.outerHTML = '<i data-lucide="sun" id="themeIcon" class="w-5 h-5"></i>';
+                } else {
+                    iconNode.outerHTML = '<i data-lucide="moon" id="themeIcon" class="w-5 h-5"></i>';
+                }
+                lucide.createIcons();
+                
+                // Redraw charts for theme
+                this.renderCharts();
+            },
+
+            login: async function() {
+                const username = document.getElementById('usernameInput').value;
+                const pin = document.getElementById('pinInput').value;
+                const btnText = document.getElementById('loginText');
+                const loader = document.getElementById('loginLoader');
+                const err = document.getElementById('loginError');
+                
+                if (!username || pin.length < 4) {
+                    err.innerText = "Please enter Username and PIN";
+                    err.classList.remove('hidden'); return;
+                }
+
+                btnText.classList.add('hidden');
+                loader.classList.remove('hidden');
+                err.classList.add('hidden');
+
+                try {
+                    // API Call
+                    const res = await API.post('login', { username, pin });
+                    
+                    if (res.status === 'success') {
+                        this.user = res.data.user;
+                        this.setupUIForUser();
+                        
+                        document.getElementById('loginView').classList.add('hidden');
+                        document.getElementById('appWrapper').classList.remove('hidden');
+                        
+                        this.loadData(); // Load initial dashboard
+                    } else {
+                        throw new Error(res.message);
+                    }
+                } catch (e) {
+                    err.innerText = e.message || "Invalid PIN";
+                    err.classList.remove('hidden');
+                } finally {
+                    btnText.classList.remove('hidden');
+                    loader.classList.add('hidden');
+                }
+            },
+
+            logout: function() {
+                this.user = null;
+                document.getElementById('appWrapper').classList.add('hidden');
+                document.getElementById('loginView').classList.remove('hidden');
+                document.getElementById('pinInput').value = '';
+            },
+
+            setupUIForUser: function() {
+                document.getElementById('userName').innerText = this.user.name;
+                document.getElementById('userRole').innerText = this.user.role;
+                document.getElementById('userInitials').innerText = this.user.name.split(' ').map(n=>n[0]).join('').substring(0,2);
+                
+                // Role based UI filtering
+                const adminElements = document.querySelectorAll('.admin-only');
+                if (this.user.role !== 'ADMIN') {
+                    adminElements.forEach(el => el.style.display = 'none');
+                } else {
+                    adminElements.forEach(el => el.style.display = 'flex');
+                }
+            },
+
+            navigate: function(viewName) {
+                this.currentView = viewName;
+                
+                // Update Nav Active State
+                document.querySelectorAll('.nav-item').forEach(el => {
+                    if (el.dataset.view === viewName) {
+                        el.classList.add('bg-blue-50', 'dark:bg-slate-800/80', 'text-blue-600', 'dark:text-blue-400');
+                        el.classList.remove('text-slate-600', 'dark:text-slate-400');
+                    } else {
+                        el.classList.remove('bg-blue-50', 'dark:bg-slate-800/80', 'text-blue-600', 'dark:text-blue-400');
+                        el.classList.add('text-slate-600', 'dark:text-slate-400');
+                    }
+                });
+
+                // Update View Content
+                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+                document.getElementById('view-' + viewName).classList.remove('hidden');
+
+                // Titles
+                const titles = {
+                    'dashboard': 'Executive Dashboard',
+                    'financial': 'Consolidated Financials',
+                    'department': 'Department Analytics',
+                    'ai-insight': 'AI Intelligence',
+                    'upload': 'Data Ingestion'
+                };
+                document.getElementById('pageTitle').innerText = titles[viewName];
+
+                this.loadData(); // Fetch contextual data
+            },
+
+            showLoader: function(show) {
+                const el = document.getElementById('contentLoader');
+                if(show) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            },
+
+            loadData: async function() {
+                const period = document.getElementById('periodSelector').value;
+                this.showLoader(true);
+                
+                try {
+                    if (this.currentView === 'dashboard') {
+                        const res = await API.post('get_dashboard', { period });
+                        this.renderDashboard(res.data);
+                    } else if (this.currentView === 'financial') {
+                        const res = await API.post('get_pnl', { period, filterType: 'HOTEL' });
+                        this.renderPnL(res.data, 'pnlTableBody');
+                    } else if (this.currentView === 'department') {
+                        this.loadDepartmentPnL();
+                    } else if (this.currentView === 'ai-insight') {
+                        const res = await API.post('get_ai_insights', { period });
+                        this.renderAIInsights(res.data);
+                    }
+                } catch(e) {
+                    console.error(e);
+                } finally {
+                    this.showLoader(false);
+                }
+            },
+
+            loadDepartmentPnL: async function() {
+                const period = document.getElementById('periodSelector').value;
+                const dept = document.getElementById('deptSelector').value;
+                this.showLoader(true);
+                try {
+                    const res = await API.post('get_pnl', { period, filterType: 'DEPARTMENT', filterId: dept });
+                    this.renderPnL(res.data, 'deptTableBody');
+                } catch(e) {
+                    console.error(e);
+                } finally {
+                    this.showLoader(false);
+                }
+            },
+
+            renderDashboard: function(data) {
+                const kpi = data.kpi;
+                
+                // Update Cards
+                document.getElementById('kpiRev').innerText = formatMoney(kpi.revenue.actual);
+                const revVar = document.getElementById('kpiRevVar');
+                revVar.innerHTML = `<i data-lucide="${kpi.revenue.varPct >= 100 ? 'trending-up' : 'trending-down'}" class="w-3 h-3 mr-1"></i> ${formatPct(Math.abs(kpi.revenue.varPct - 100))}`;
+                revVar.className = `flex items-center px-1.5 py-0.5 rounded mr-2 text-xs font-bold ${kpi.revenue.varPct >= 100 ? 'text-emerald-500 bg-emerald-500/10' : 'text-red-500 bg-red-500/10'}`;
+
+                document.getElementById('kpiGop').innerText = formatMoney(kpi.gop.actual);
+                document.getElementById('kpiGopMargin').innerText = `Margin: ${formatPct(kpi.gop.marginPct)}`;
+
+                document.getElementById('kpiOcc').innerText = formatPct(kpi.occupancy.actual);
+                document.getElementById('kpiOccTarget').innerText = formatPct(kpi.occupancy.target);
+
+                document.getElementById('kpiRevpar').innerText = formatMoney(kpi.revpar.actual);
+                document.getElementById('kpiArr').innerText = formatMoney(kpi.arr.actual);
+
+                lucide.createIcons();
+                this.renderCharts(data.charts);
+            },
+
+            renderCharts: function(chartData) {
+                if(!chartData && !this._lastChartData) return;
+                if(chartData) this._lastChartData = chartData;
+                const data = this._lastChartData;
+
+                const gridColor = this.theme === 'dark' ? '#334155' : '#e2e8f0';
+                const textColor = this.theme === 'dark' ? '#94a3b8' : '#64748b';
+
+                const commonOptions = {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: gridColor }, ticks: { color: textColor } },
+                        x: { grid: { display: false }, ticks: { color: textColor } }
+                    }
+                };
+
+                // Revenue Chart
+                if (this.charts.revenue) this.charts.revenue.destroy();
+                const ctxRev = document.getElementById('chartRevenue').getContext('2d');
+                this.charts.revenue = new Chart(ctxRev, {
+                    type: 'line',
+                    data: {
+                        labels: data.months,
+                        datasets: [{
+                            label: 'Revenue',
+                            data: data.revenueTrend,
+                            borderColor: '#3B82F6', backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2, fill: true, tension: 0.4
+                        }]
+                    },
+                    options: commonOptions
+                });
+
+                // GOP Chart
+                if (this.charts.gop) this.charts.gop.destroy();
+                const ctxGop = document.getElementById('chartGop').getContext('2d');
+                this.charts.gop = new Chart(ctxGop, {
+                    type: 'bar',
+                    data: {
+                        labels: data.months,
+                        datasets: [{
+                            label: 'GOP Actual',
+                            data: data.gopTrend,
+                            backgroundColor: '#10B981', borderRadius: 4
+                        }]
+                    },
+                    options: commonOptions
+                });
+            },
+
+            renderPnL: function(pnlArray, tableId) {
+                const tbody = document.getElementById(tableId);
+                let html = '';
+
+                pnlArray.forEach(group => {
+                    // Group Header (e.g. REVENUE)
+                    html += `<tr class="bg-slate-100/50 dark:bg-slate-800/80">
+                        <td class="px-6 py-3 font-bold text-slate-800 dark:text-slate-200">${group.group}</td>
+                        <td class="px-4 py-3 text-right font-bold text-slate-800 dark:text-slate-200">${formatMoney(group.totalAct)}</td>
+                        <td class="px-4 py-3 text-right font-bold text-slate-800 dark:text-slate-200">${formatMoney(group.totalBud)}</td>
+                        <td class="px-4 py-3 text-right font-bold ${group.totalAct - group.totalBud >= 0 ? 'text-emerald-500' : 'text-red-500'}">${formatMoney(group.totalAct - group.totalBud)}</td>
+                        <td class="px-4 py-3 text-right font-bold text-slate-800 dark:text-slate-200">${group.totalBud ? formatPct((group.totalAct/group.totalBud)*100) : '0%'}</td>
+                    </tr>`;
+
+                    group.subgroups.forEach(sub => {
+                        // Items mapping
+                        sub.items.forEach(item => {
+                            html += `<tr>
+                                <td class="px-6 py-2.5 text-slate-600 dark:text-slate-400 pl-10">${item.label}</td>
+                                <td class="px-4 py-2.5 text-right font-medium dark:text-slate-300">${formatMoney(item.actual)}</td>
+                                <td class="px-4 py-2.5 text-right font-medium dark:text-slate-300">${formatMoney(item.budget)}</td>
+                                <td class="px-4 py-2.5 text-right font-medium ${item.variance >= 0 ? 'text-emerald-500' : 'text-red-500'}">${formatMoney(item.variance)}</td>
+                                <td class="px-4 py-2.5 text-right font-medium dark:text-slate-300">${formatPct(item.achievePct)}</td>
+                            </tr>`;
+                        });
+                        
+                        // Subtotal
+                        html += `<tr class="border-b border-slate-100 dark:border-slate-800/50">
+                            <td class="px-6 py-2 font-semibold text-slate-700 dark:text-slate-300 pl-10">Total ${sub.subgroup}</td>
+                            <td class="px-4 py-2 text-right font-semibold dark:text-slate-300">${formatMoney(sub.subAct)}</td>
+                            <td class="px-4 py-2 text-right font-semibold dark:text-slate-300">${formatMoney(sub.subBud)}</td>
+                            <td class="px-4 py-2 text-right font-semibold ${sub.subAct - sub.subBud >= 0 ? 'text-emerald-500' : 'text-red-500'}">${formatMoney(sub.subAct - sub.subBud)}</td>
+                            <td class="px-4 py-2 text-right font-semibold dark:text-slate-300">${sub.subBud ? formatPct((sub.subAct/sub.subBud)*100) : '0%'}</td>
+                        </tr>`;
+                    });
+                });
+
+                tbody.innerHTML = html;
+            },
+
+            renderAIInsights: function(insights) {
+                const container = document.getElementById('aiInsightsContainer');
+                let html = '';
+                
+                insights.forEach(insight => {
+                    let icon = 'info';
+                    let color = 'text-blue-500';
+                    let bg = 'bg-blue-50 dark:bg-blue-900/20';
+                    
+                    if(insight.type === 'warning') { icon = 'alert-triangle'; color = 'text-amber-500'; bg = 'bg-amber-50 dark:bg-amber-900/20'; }
+                    if(insight.type === 'positive') { icon = 'trending-up'; color = 'text-emerald-500'; bg = 'bg-emerald-50 dark:bg-emerald-900/20'; }
+                    if(insight.type === 'negative') { icon = 'trending-down'; color = 'text-red-500'; bg = 'bg-red-50 dark:bg-red-900/20'; }
+
+                    html += `
+                    <div class="flex gap-4 p-4 rounded-xl border border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-800 shadow-sm">
+                        <div class="shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${bg}">
+                            <i data-lucide="${icon}" class="w-5 h-5 ${color}"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold dark:text-white mb-1">${insight.title}</h4>
+                            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">${insight.message}</p>
+                        </div>
+                    </div>`;
+                });
+                container.innerHTML = html;
+                lucide.createIcons();
+            }
+        };
+
+        // --- MOCK API ENGINE (Used if GAS_API_URL is empty) ---
+        const API = {
+            post: async function(action, payload) {
+                if (CONFIG.GAS_API_URL) {
+                    // REAL GAS BACKEND CALL
+                    const response = await fetch(CONFIG.GAS_API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action, payload, token: App.user ? App.user.token : null }),
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    return await response.json();
+                } else {
+                    // MOCK DELAY & DATA FOR PREVIEW
+                    return new Promise(resolve => {
+                        setTimeout(() => resolve(MockDB.process(action, payload)), 800);
                     });
                 }
-            });
-        }
-
-        function navigate(viewId, targetId = null) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'bg-white/10', 'text-white'));
-            
-            document.getElementById(`view-${viewId}`).classList.add('active');
-            
-            if(targetId) {
-                const nav = document.querySelector(`.nav-item[data-target="${targetId}"]`);
-                if(nav) nav.classList.add('active', 'bg-white/10', 'text-white');
-            } else {
-                const nav = document.querySelector(`.nav-item[data-target="${viewId}"]`);
-                if(nav) nav.classList.add('active', 'bg-white/10', 'text-white');
             }
+        };
 
-            State.currentView = viewId;
-            document.getElementById('main-scroll').scrollTo(0,0);
-            
-            if(viewId === 'dashboard') loadDashboard();
-        }
-
-        function refreshCurrentView() {
-            if(State.currentView === 'dashboard') loadDashboard();
-            else if(State.currentView === 'report') loadReport(State.currentDeptId, State.currentOutletId);
-        }
-
-        // --- DASHBOARD ---
-        async function loadDashboard() {
-            const m = document.getElementById('filter-month').value;
-            const y = document.getElementById('filter-year').value;
-            const data = await apiCall('getDashboard', { month: m, year: y });
-            if(!data) return;
-
-            document.getElementById('stat-occ').innerText = fmtPct(data.stats.occupancy);
-            document.getElementById('stat-arr').innerText = fmtCur(data.stats.arr);
-            document.getElementById('stat-spend').innerText = fmtCur(data.stats.guest_spend);
-            document.getElementById('stat-hc').innerText = fmtNum(data.stats.headcount);
-
-            document.getElementById('sum-mtd-rev').innerText = fmtCur(data.kpi.mtdRevenue);
-            document.getElementById('sum-ytd-rev').innerText = fmtCur(data.kpi.ytdRevenue);
-            document.getElementById('sum-ytd-budrev').innerText = fmtCur(data.kpi.ytdBudgetRev);
-            
-            document.getElementById('sum-mtd-exp').innerText = fmtCur(data.kpi.mtdExpense);
-            document.getElementById('sum-ytd-exp').innerText = fmtCur(data.kpi.ytdExpense);
-            document.getElementById('sum-ytd-budexp').innerText = fmtCur(data.kpi.ytdBudgetExp);
-
-            document.getElementById('sum-mtd-prof').innerText = fmtCur(data.kpi.mtdProfit);
-            document.getElementById('sum-ytd-prof').innerText = fmtCur(data.kpi.ytdProfit);
-        }
-
-        // --- P&L REPORT ---
-        async function loadReport(deptId, outletId) {
-            State.currentDeptId = deptId;
-            State.currentOutletId = outletId;
-            
-            const m = document.getElementById('filter-month').value;
-            const y = document.getElementById('filter-year').value;
-            const monthText = document.getElementById('filter-month').options[document.getElementById('filter-month').selectedIndex].text;
-            
-            const data = await apiCall('getPnLReport', { month: m, year: y, department_id: deptId, outlet_id: outletId });
-            if(!data) return;
-
-            let title = data.department.department_name;
-            if(outletId) {
-                const outlet = State.systemMenu.outlets.find(o => o.outlet_id === outletId);
-                if(outlet) title += ` - ${outlet.outlet_name}`;
+        const MockDB = {
+            process: function(action, payload) {
+                if (action === 'login') {
+                    if (payload.username === 'admin' && payload.pin === '1234') return { status: 'success', data: { user: { id: 'U1', name: 'James Wilson', role: 'ADMIN', token: 'mock-token-xyz' } } };
+                    if (payload.username === 'hod' && payload.pin === '5678') return { status: 'success', data: { user: { id: 'U2', name: 'Sarah Connor', role: 'HOD', departmentId: 'ROOMS', token: 'mock-token-abc' } } };
+                    throw new Error("Invalid Credentials.");
+                }
+                if (action === 'get_dashboard') {
+                    return { status: 'success', data: {
+                        kpi: {
+                            occupancy: { actual: 78.5, target: 80.0 },
+                            arr: { actual: 1250000, target: 1200000 },
+                            revpar: { actual: 981250, target: 960000 },
+                            revenue: { actual: 4500000000, budget: 4200000000, varPct: 107.1 },
+                            gop: { actual: 1800000000, budget: 1600000000, marginPct: 40.0 }
+                        },
+                        charts: {
+                            revenueTrend: [3.8, 3.9, 4.1, 4.0, 4.2, 4.5], // scaled for UI display in billions
+                            gopTrend: [1.2, 1.3, 1.4, 1.3, 1.6, 1.8],
+                            months: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May']
+                        }
+                    }};
+                }
+                if (action === 'get_pnl') {
+                    // Generate Mock Hierarchical P&L
+                    const factor = payload.filterType === 'DEPARTMENT' ? 0.3 : 1.0;
+                    return { status: 'success', data: [
+                        { group: 'REVENUE', totalAct: 4500000000 * factor, totalBud: 4200000000 * factor, totalLY: 4000000000 * factor, subgroups: [
+                            { subgroup: 'Rooms', subAct: 2800000000 * factor, subBud: 2600000000 * factor, items: [
+                                { label: 'Transient Rooms', actual: 1500000000 * factor, budget: 1400000000 * factor, variance: 100000000 * factor, achievePct: 107 },
+                                { label: 'Group Rooms', actual: 1300000000 * factor, budget: 1200000000 * factor, variance: 100000000 * factor, achievePct: 108 }
+                            ]},
+                            { subgroup: 'F&B', subAct: 1700000000 * factor, subBud: 1600000000 * factor, items: [
+                                { label: 'Restaurant', actual: 900000000 * factor, budget: 850000000 * factor, variance: 50000000 * factor, achievePct: 105 },
+                                { label: 'Banquet', actual: 800000000 * factor, budget: 750000000 * factor, variance: 50000000 * factor, achievePct: 106 }
+                            ]}
+                        ]},
+                        { group: 'EXPENSES', totalAct: 2700000000 * factor, totalBud: 2600000000 * factor, totalLY: 2500000000 * factor, subgroups: [
+                            { subgroup: 'Cost of Sales', subAct: 500000000 * factor, subBud: 480000000 * factor, items: [
+                                { label: 'Food Cost', actual: 300000000 * factor, budget: 280000000 * factor, variance: 20000000 * factor, achievePct: 107 },
+                                { label: 'Beverage Cost', actual: 200000000 * factor, budget: 200000000 * factor, variance: 0, achievePct: 100 }
+                            ]},
+                            { subgroup: 'Payroll', subAct: 1200000000 * factor, subBud: 1200000000 * factor, items: [
+                                { label: 'Salaries & Wages', actual: 900000000 * factor, budget: 900000000 * factor, variance: 0, achievePct: 100 },
+                                { label: 'Benefits', actual: 300000000 * factor, budget: 300000000 * factor, variance: 0, achievePct: 100 }
+                            ]}
+                        ]}
+                    ]};
+                }
+                if (action === 'get_ai_insights') {
+                    return { status: 'success', data: [
+                        { type: 'positive', title: 'Revenue Outperformance', message: 'Total revenue exceeded budget by 7.1% driven strongly by Transient Room segment outperforming by Rp 100M.' },
+                        { type: 'warning', title: 'F&B Cost Alert', message: 'Food Cost ratio is currently running 2% above expected margins compared to forecasted covers. Recommend menu engineering review.' },
+                        { type: 'info', title: 'GOP Conversion', message: 'Flow-through is excellent. For every Rp 100 of extra revenue, Rp 65 dropped to the GOP line.' }
+                    ]};
+                }
             }
-            document.getElementById('rep-title').innerText = title + ' P&L';
-            document.getElementById('rep-subtitle').innerText = `Period: ${monthText} ${y}`;
+        };
 
-            const revSec = document.getElementById('rep-rev-section');
-            if(data.department.type === 'BACK_OFFICE' && !outletId) {
-                revSec.style.display = 'none';
-            } else {
-                revSec.style.display = 'block';
-                renderTable('rev', data.revenues);
-            }
-            
-            renderTable('exp', data.expenses);
-            navigate('report', outletId ? `rep_${outletId}` : `rep_${deptId}`);
-        }
+        // Initialize App
+        window.onload = () => App.init();
 
-        function renderTable(type, dataArray) {
-            const tbody = document.getElementById(`tbody-${type}`);
-            const tfoot = document.getElementById(`tfoot-${type}`);
-            tbody.innerHTML = '';
-            
-            let tot_mtd_act = 0, tot_mtd_bud = 0, tot_ytd_act = 0, tot_ytd_bud = 0;
-
-            if(dataArray.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-slate-500 italic">No transactions found for this period.</td></tr>`;
-                tfoot.innerHTML = ''; return;
-            }
-
-            dataArray.forEach(row => {
-                tot_mtd_act += row.mtd_actual; tot_mtd_bud += row.mtd_budget;
-                tot_ytd_act += row.ytd_actual; tot_ytd_bud += row.ytd_budget;
-                
-                const colClass = type==='rev' ? 'text-emerald-400' : 'text-rose-400';
-                
-                tbody.innerHTML += `
-                    <tr class="hover:bg-white/5">
-                        <td class="px-4 py-2">${row.code} - ${row.name}</td>
-                        <td class="px-4 py-2 text-right text-white">${fmtCur(row.mtd_actual)}</td>
-                        <td class="px-4 py-2 text-right text-slate-400">${fmtCur(row.mtd_budget)}</td>
-                        <td class="px-4 py-2 text-right ${colClass}">${fmtPct(row.mtd_ach)}</td>
-                        <td class="px-4 py-2 text-right text-white border-l border-slate-700/50">${fmtCur(row.ytd_actual)}</td>
-                        <td class="px-4 py-2 text-right text-slate-400">${fmtCur(row.ytd_budget)}</td>
-                        <td class="px-4 py-2 text-right ${colClass}">${fmtPct(row.ytd_ach)}</td>
-                    </tr>
-                `;
-            });
-
-            const tot_mtd_ach = tot_mtd_bud > 0 ? (tot_mtd_act/tot_mtd_bud)*100 : 0;
-            const tot_ytd_ach = tot_ytd_bud > 0 ? (tot_ytd_act/tot_ytd_bud)*100 : 0;
-            const tcol = type==='rev' ? 'text-emerald-400' : 'text-rose-400';
-
-            tfoot.innerHTML = `
-                <tr>
-                    <td class="px-4 py-3">TOTAL ${type.toUpperCase()}</td>
-                    <td class="px-4 py-3 text-right">${fmtCur(tot_mtd_act)}</td>
-                    <td class="px-4 py-3 text-right text-slate-400">${fmtCur(tot_mtd_bud)}</td>
-                    <td class="px-4 py-3 text-right ${tcol}">${fmtPct(tot_mtd_ach)}</td>
-                    <td class="px-4 py-3 text-right border-l border-slate-700/50">${fmtCur(tot_ytd_act)}</td>
-                    <td class="px-4 py-3 text-right text-slate-400">${fmtCur(tot_ytd_bud)}</td>
-                    <td class="px-4 py-3 text-right ${tcol}">${fmtPct(tot_ytd_ach)}</td>
-                </tr>
-            `;
-        }
-
-        // --- UTILS ---
-        function showToast(msg, type='info') {
-            const container = document.getElementById('toast-container');
-            const el = document.createElement('div');
-            const bg = type==='success' ? 'bg-emerald-500/90' : type==='error' ? 'bg-rose-500/90' : 'bg-brand-500/90';
-            el.className = `flex items-center gap-3 px-4 py-3 rounded-lg text-white shadow-lg text-sm ${bg} transition-all duration-300 transform translate-x-full`;
-            el.innerHTML = `<span>${msg}</span>`;
-            container.appendChild(el);
-            setTimeout(() => el.classList.remove('translate-x-full'), 10);
-            setTimeout(() => { el.classList.add('translate-x-full'); setTimeout(() => el.remove(), 300); }, 3000);
-        }
     </script>
 </body>
 </html>
