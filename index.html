@@ -605,7 +605,8 @@
                 const deptOutlets = this.systemData.outlets.filter(o => o.department_id === deptId);
                 
                 if (deptOutlets.length > 0) {
-                    outletSelect.innerHTML = `<option value="ALL">All Outlets</option>`;
+                    // Ubah teks ini agar lebih jelas bahwa ini adalah Summary level
+                    outletSelect.innerHTML = `<option value="ALL">⭐ F&B Summary (All Outlets)</option>`;
                     deptOutlets.forEach(o => {
                         outletSelect.innerHTML += `<option value="${o.id}">${o.name}</option>`;
                     });
