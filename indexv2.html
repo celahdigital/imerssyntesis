@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iMers Income Synthesis - Executive Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        hotel: {
+                            900: '#0F172A',
+                            800: '#1E293B',
+                            700: '#334155',
+                            600: '#475569',
+                            brand: '#3B82F6', // Blue accent
+                            gold: '#D4AF37'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; }
+        .dark body { background-color: #0F172A; color: #F1F5F9; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .dark .glass-panel { background: rgba(30, 41, 59, 0.95); border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Custom Scrollbar for tables */
+        .table-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .table-scroll::-webkit-scrollbar-track { background: transparent; }
+        .table-scroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+        .dark .table-scroll::-webkit-scrollbar-thumb { background: #475569; }
+
+        /* Loader */
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3B82F6; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="text-slate-800 antialiased transition-colors duration-300">
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginView" class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-slate-900 dark:via-purple-900/20 dark:to-slate-900 hidden">
+        <div class="bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl p-10 rounded-[2rem] shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)] dark:shadow-[0_20px_50px_rgba(0,_0,_0,_0.5)] border border-white/50 dark:border-slate-700/50 w-full max-w-md text-center transform transition-all">
+            
+            <!-- Logo Icon -->
+            <div class="mb-8 flex justify-center">
+                <div class="w-20 h-20 bg-gradient-to-tr from-blue-600 to-violet-500 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/30 transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                    <i data-lucide="building-2" class="w-10 h-10 text-white transform -rotate-3"></i>
+                </div>
+            </div>
+            
+            <!-- Title with Gradient Text -->
+            <h1 class="text-4xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-violet-700 dark:from-blue-400 dark:to-violet-400">iMers</h1>
+            <p class="text-slate-500 dark:text-slate-400 mb-8 text-sm font-bold tracking-[0.3em] uppercase">Income Synthesis</p>
+            
+            <div class="space-y-5">
+                <!-- Username Input -->
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i data-lucide="user" class="w-5 h-5 text-slate-400"></i>
+                    </div>
+                    <input type="text" id="usernameInput" placeholder="Username" autocomplete="off"
+                           class="w-full bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white pl-12 pr-4 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all placeholder-slate-400 font-medium">
+                </div>
+                
+                <!-- PIN Input -->
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i data-lucide="lock" class="w-5 h-5 text-slate-400"></i>
+                    </div>
+                    <input type="password" id="pinInput" placeholder="Secure PIN" maxlength="6"
+                           class="w-full text-center text-xl tracking-[0.5em] font-mono bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white pl-12 pr-4 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all placeholder-slate-400">
+                </div>
+
+                <button onclick="App.login()" class="w-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-violet-500/30 flex justify-center items-center gap-2 mt-2">
+                    <span id="loginText">Secure Access</span>
+                    <div id="loginLoader" class="loader hidden border-white border-top-transparent w-5 h-5"></div>
+                </button>
+                <p id="loginError" class="text-rose-500 text-sm h-4 hidden font-medium">Invalid Credentials</p>
+            </div>
+            <p class="mt-10 text-xs text-slate-400 font-medium tracking-wide">EXECUTIVE HOSPITALITY INTELLIGENCE</p>
+        </div>
+    </div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div id="appWrapper" class="flex h-screen overflow-hidden hidden">
+        
+        <!-- SIDEBAR -->
+        <aside class="w-64 glass-panel border-r border-slate-200 dark:border-slate-800 flex flex-col z-20">
+            <div class="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-800">
+                <i data-lucide="building-2" class="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3"></i>
+                <span class="font-bold text-lg tracking-tight dark:text-white">iMers <span class="font-light text-slate-500">BI</span></span>
+            </div>
+            
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold">
+                    <span id="userInitials">GM</span>
+                </div>
+                <div class="flex-1 overflow-hidden">
+                    <p id="userName" class="text-sm font-semibold truncate dark:text-white">John Doe</p>
+                    <p id="userRole" class="text-xs text-slate-500 truncate">General Manager</p>
+                </div>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                <a href="#" onclick="App.navigate('dashboard')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" data-view="dashboard">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span class="font-medium text-sm">Executive Board</span>
+                </a>
+                <a href="#" onclick="App.navigate('financial')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" data-view="financial">
+                    <i data-lucide="file-spreadsheet" class="w-5 h-5"></i> <span class="font-medium text-sm">Consolidated P&L</span>
+                </a>
+                <a href="#" onclick="App.navigate('department')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" data-view="department">
+                    <i data-lucide="network" class="w-5 h-5"></i> <span class="font-medium text-sm">Department P&L</span>
+                </a>
+                
+                <div class="pt-6 pb-2 px-3">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">System & Admin</p>
+                </div>
+                
+                <a href="#" onclick="App.navigate('upload')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 transition-colors admin-only" data-view="upload">
+                    <i data-lucide="upload-cloud" class="w-5 h-5"></i> <span class="font-medium text-sm">Data Ingestion</span>
+                </a>
+                <a href="#" onclick="App.navigate('mapping')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 transition-colors admin-only" data-view="mapping">
+                    <i data-lucide="git-merge" class="w-5 h-5"></i> <span class="font-medium text-sm">Mapping Engine</span>
+                </a>
+                <a href="#" onclick="App.navigate('users')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 transition-colors admin-only" data-view="users">
+                    <i data-lucide="users" class="w-5 h-5"></i> <span class="font-medium text-sm">User Management</span>
+                </a>
+                <a href="#" onclick="App.navigate('settings')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 transition-colors admin-only" data-view="settings">
+                    <i data-lucide="building" class="w-5 h-5"></i> <span class="font-medium text-sm">Hotel Settings</span>
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+                <button onclick="App.logout()" class="flex items-center gap-2 text-sm text-slate-500 hover:text-red-500 transition-colors w-full">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Secure Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-hotel-900 relative">
+            
+            <!-- HEADER -->
+            <header class="h-16 glass-panel border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 z-10">
+                <div>
+                    <h2 id="pageTitle" class="text-xl font-bold dark:text-white">Executive Dashboard</h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 shadow-sm">
+                        <i data-lucide="calendar" class="w-4 h-4 text-slate-500"></i>
+                        <select id="periodSelector" class="bg-transparent text-sm font-medium focus:outline-none dark:text-white cursor-pointer" onchange="App.loadData()">
+                            <option value="2026-05">May 2026</option>
+                            <option value="2026-04">April 2026</option>
+                            <option value="2026-03">March 2026</option>
+                        </select>
+                    </div>
+                    <button onclick="App.toggleTheme()" class="p-2 rounded-lg text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                        <i data-lucide="moon" id="themeIcon" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- SCROLLABLE CONTENT AREA -->
+            <div class="flex-1 overflow-y-auto p-6 relative">
+                
+                <!-- Loading Overlay -->
+                <div id="contentLoader" class="absolute inset-0 bg-slate-50/80 dark:bg-hotel-900/80 z-50 flex items-center justify-center backdrop-blur-sm hidden">
+                    <div class="flex flex-col items-center">
+                        <div class="loader mb-4 border-blue-600 border-top-transparent"></div>
+                        <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Synthesizing Data...</p>
+                    </div>
+                </div>
+
+                <!-- VIEW: DASHBOARD -->
+                <div id="view-dashboard" class="view-section space-y-6">
+                    <!-- KPI Cards Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Revenue -->
+                        <div class="glass-panel p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                            <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">Total Revenue</p>
+                            <h3 class="text-2xl font-bold dark:text-white mb-2" id="kpiRev">Rp 0</h3>
+                            <div class="flex items-center text-xs font-medium">
+                                <span class="flex items-center text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded mr-2" id="kpiRevVar">
+                                    <i data-lucide="trending-up" class="w-3 h-3 mr-1"></i> 0%
+                                </span>
+                                <span class="text-slate-400">vs Budget</span>
+                            </div>
+                        </div>
+                        
+                        <!-- GOP -->
+                        <div class="glass-panel p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                            <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">Gross Operating Profit</p>
+                            <h3 class="text-2xl font-bold dark:text-white mb-2" id="kpiGop">Rp 0</h3>
+                            <div class="flex items-center text-xs font-medium">
+                                <span class="text-slate-600 dark:text-slate-300 mr-2" id="kpiGopMargin">Margin: 0%</span>
+                            </div>
+                        </div>
+
+                        <!-- Occupancy -->
+                        <div class="glass-panel p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                            <div class="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">Occupancy</p>
+                            <h3 class="text-2xl font-bold dark:text-white mb-2" id="kpiOcc">0%</h3>
+                            <div class="flex items-center text-xs font-medium">
+                                <span class="text-slate-400">Target: <span id="kpiOccTarget">0%</span></span>
+                            </div>
+                        </div>
+
+                        <!-- RevPAR -->
+                        <div class="glass-panel p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                            <div class="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">RevPAR</p>
+                            <h3 class="text-2xl font-bold dark:text-white mb-2" id="kpiRevpar">Rp 0</h3>
+                            <div class="flex items-center text-xs font-medium">
+                                <span class="text-slate-400">ARR: <span id="kpiArr" class="text-slate-600 dark:text-slate-300">Rp 0</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="glass-panel p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <h4 class="text-base font-bold dark:text-white mb-4">Revenue Trend (YTD)</h4>
+                            <div class="h-64 w-full relative">
+                                <canvas id="chartRevenue"></canvas>
+                            </div>
+                        </div>
+                        <div class="glass-panel p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <h4 class="text-base font-bold dark:text-white mb-4">GOP vs Budget</h4>
+                            <div class="h-64 w-full relative">
+                                <canvas id="chartGop"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: FINANCIAL (P&L) -->
+                <div id="view-financial" class="view-section hidden space-y-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg dark:text-white">Hotel Consolidated Statement</h3>
+                        <button class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2 border border-slate-200 dark:border-slate-700">
+                            <i data-lucide="download" class="w-4 h-4"></i> Export PDF
+                        </button>
+                    </div>
+
+                    <div class="glass-panel rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                        <div class="table-scroll overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-4 font-semibold">Description</th>
+                                        <th scope="col" class="px-4 py-4 text-right font-semibold">Actual</th>
+                                        <th scope="col" class="px-4 py-4 text-right font-semibold">Budget</th>
+                                        <th scope="col" class="px-4 py-4 text-right font-semibold">Var (Rp)</th>
+                                        <th scope="col" class="px-4 py-4 text-right font-semibold">Ach %</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pnlTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/50">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- VIEW: DEPARTMENT P&L -->
+                <div id="view-department" class="view-section hidden space-y-4">
+                    <div class="flex items-center gap-4 mb-4">
+                        <h3 class="font-bold text-lg dark:text-white">Department Drill-down</h3>
+                        <!-- Ditambahkan min-w-[220px] agar tidak mengecil saat kosong -->
+                        <select id="deptSelector" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 shadow-sm text-sm dark:text-white min-w-[220px] focus:ring-2 focus:ring-blue-500 outline-none transition-all" onchange="App.handleDeptChange()">
+                            <option value="">Loading data...</option>
+                        </select>
+                        <select id="outletSelector" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 shadow-sm text-sm dark:text-white min-w-[220px] focus:ring-2 focus:ring-blue-500 outline-none transition-all hidden" onchange="App.loadDepartmentPnL()">
+                            <option value="ALL">All Outlets</option>
+                        </select>
+                    </div>
+                     <div class="glass-panel rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                        <div class="table-scroll overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-4 font-semibold">Category</th>
+                                        <th scope="col" class="px-4 py-4 text-right font-semibold">Actual</th>
+                                        <th scope="col" class="px-4 py-4 text-right font-semibold">Budget</th>
+                                        <th scope="col" class="px-4 py-4 text-right font-semibold">Variance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="deptTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/50">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: UPLOAD -->
+                <div id="view-upload" class="view-section hidden space-y-6">
+                    <div class="glass-panel p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm max-w-2xl mx-auto text-center">
+                        <div class="w-16 h-16 bg-blue-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-100 dark:border-slate-700">
+                            <i data-lucide="upload-cloud" class="w-8 h-8 text-blue-600"></i>
+                        </div>
+                        <h3 class="font-bold text-xl dark:text-white mb-2">Ingest Financial Data</h3>
+                        <p class="text-slate-500 text-sm mb-6">Upload Trial Balance ending balances or Budget mapping Excel files to update the reporting engine.</p>
+                        
+                        <div class="flex flex-col gap-4">
+                            <div class="flex justify-center gap-4 mb-2">
+                                <button onclick="App.downloadTemplate('TB')" class="text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-md flex items-center gap-1 border border-blue-200 transition-colors">
+                                    <i data-lucide="download" class="w-3 h-3"></i> Trial Balance Template
+                                </button>
+                                <button onclick="App.downloadTemplate('BUDGET')" class="text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-md flex items-center gap-1 border border-emerald-200 transition-colors">
+                                    <i data-lucide="download" class="w-3 h-3"></i> Budget/KPI (12-Mo) Template
+                                </button>
+                            </div>
+
+                            <!-- INPUT YEAR (Penting untuk Unpivot) -->
+                            <div class="flex items-center justify-center gap-2 mb-2">
+                                <label class="text-sm font-semibold dark:text-white">Target Year:</label>
+                                <input type="number" id="uploadYear" value="2026" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1 text-sm dark:text-white w-24 text-center">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <select id="uploadType" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-3 shadow-sm text-sm dark:text-white w-full focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="ACTUAL">Actuals (Trial Balance)</option>
+                                    <option value="BUDGET">Forecast / Budget</option>
+                                    <option value="KPI">Operational KPI</option>
+                                    <option value="LAST_YEAR">Last Year Data</option>
+                                </select>
+                                <select id="budgetTypeSelector" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-3 shadow-sm text-sm dark:text-white w-full focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="ACTUAL">-- Select Scenario (For Budget/KPI) --</option>
+                                    <option value="OWNER">Owner Budget</option>
+                                    <option value="CORPORATE">Corporate Budget</option>
+                                    <option value="FORECAST">Forecast</option>
+                                </select>
+                            </div>
+                            
+                            <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 hover:border-blue-500 transition-colors cursor-pointer bg-slate-50 dark:bg-slate-900/50 group">
+                                <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
+                                <label for="fileInput" class="cursor-pointer flex flex-col items-center">
+                                    <i data-lucide="file-text" class="w-8 h-8 text-slate-400 mb-2 group-hover:text-blue-500 transition-colors"></i>
+                                    <span class="text-sm font-medium text-blue-600">Click to select file</span>
+                                    <span class="text-xs text-slate-400 mt-1">XLSX, CSV up to 10MB</span>
+                                </label>
+                            </div>
+                            
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-all shadow-md w-full">
+                                Process & Ingest
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: MAPPING ENGINE -->
+                <div id="view-mapping" class="view-section hidden space-y-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg dark:text-white">Chart of Accounts Mapping</h3>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                            <i data-lucide="plus" class="w-4 h-4"></i> New Map
+                        </button>
+                    </div>
+                    <div class="glass-panel rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-8 text-center">
+                        <i data-lucide="git-merge" class="w-12 h-12 text-slate-300 mx-auto mb-4"></i>
+                        <h4 class="text-slate-600 dark:text-slate-400 font-medium">Mapping Data Grid</h4>
+                        <p class="text-sm text-slate-400 mt-2">Connects to GL_MAPPING sheet in database.</p>
+                    </div>
+                </div>
+
+                <!-- VIEW: USER MANAGEMENT -->
+                <div id="view-users" class="view-section hidden space-y-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg dark:text-white">User Management</h3>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                            <i data-lucide="user-plus" class="w-4 h-4"></i> Add User
+                        </button>
+                    </div>
+                    <div class="glass-panel rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-8 text-center">
+                        <i data-lucide="users" class="w-12 h-12 text-slate-300 mx-auto mb-4"></i>
+                        <h4 class="text-slate-600 dark:text-slate-400 font-medium">User Database Grid</h4>
+                        <p class="text-sm text-slate-400 mt-2">Connects to USERS and ROLES sheets in database.</p>
+                    </div>
+                </div>
+
+                <!-- VIEW: HOTEL SETTINGS -->
+                <div id="view-settings" class="view-section hidden space-y-4">
+                    <div class="flex items-center gap-4 mb-4">
+                        <h3 class="font-bold text-lg dark:text-white">Hotel Profile Configuration</h3>
+                    </div>
+                    <div class="glass-panel rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 max-w-3xl">
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Hotel Name</label>
+                                <input type="text" value="Grand iMers Hotel" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">General Manager Name</label>
+                                <input type="text" value="John Doe" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Total Rooms</label>
+                                <input type="number" value="250" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Base Currency</label>
+                                <input type="text" value="IDR" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-all shadow-sm">Save Profile</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- MAIN APP SCRIPT -->
+    <script>
+        // CONFIGURATION
+        const CONFIG = {
+            // Put your deployed Google Apps Script Web App URL here
+            GAS_API_URL: "",
+            currency: 'Rp',
+            locale: 'id-ID'
+        };
+
+        // Format currency helper
+        const formatMoney = (amount) => {
+            return new Intl.NumberFormat(CONFIG.locale, { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(amount).replace('IDR', 'Rp');
+        };
+
+        const formatPct = (val) => {
+            return (val).toFixed(1) + '%';
+        };
+
+        // --- APP STATE & ENGINE ---
+        const App = {
+            user: null,
+            currentView: 'dashboard',
+            theme: 'light',
+            charts: {},
+            systemData: { departments: [], outlets: [] },
+
+            init: function() {
+                lucide.createIcons();
+                // Check local storage theme
+                if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    this.theme = 'dark';
+                    document.documentElement.classList.add('dark');
+                    document.getElementById('themeIcon').setAttribute('data-lucide', 'sun');
+                }
+                
+                // Show login
+                document.getElementById('loginView').classList.remove('hidden');
+                lucide.createIcons();
+            },
+
+            toggleTheme: function() {
+                this.theme = this.theme === 'dark' ? 'light' : 'dark';
+                document.documentElement.classList.toggle('dark');
+                localStorage.theme = this.theme;
+                
+                // Update icon
+                const iconNode = document.getElementById('themeIcon');
+                if(this.theme === 'dark') {
+                    iconNode.outerHTML = '<i data-lucide="sun" id="themeIcon" class="w-5 h-5"></i>';
+                } else {
+                    iconNode.outerHTML = '<i data-lucide="moon" id="themeIcon" class="w-5 h-5"></i>';
+                }
+                lucide.createIcons();
+                
+                // Redraw charts for theme
+                this.renderCharts();
+            },
+
+            login: async function() {
+                const username = document.getElementById('usernameInput').value;
+                const pin = document.getElementById('pinInput').value;
+                const btnText = document.getElementById('loginText');
+                const loader = document.getElementById('loginLoader');
+                const err = document.getElementById('loginError');
+                
+                if (!username || pin.length < 4) {
+                    err.innerText = "Please enter Username and PIN";
+                    err.classList.remove('hidden'); return;
+                }
+
+                btnText.classList.add('hidden');
+                loader.classList.remove('hidden');
+                err.classList.add('hidden');
+
+                try {
+                    // API Call
+                    const res = await API.post('login', { username, pin });
+                    
+                    if (res.status === 'success') {
+                        this.user = res.data.user;
+                        this.setupUIForUser();
+                        
+                        document.getElementById('loginView').classList.add('hidden');
+                        document.getElementById('appWrapper').classList.remove('hidden');
+                        
+                        this.initSystemData();
+                    } else {
+                        throw new Error(res.message);
+                    }
+                } catch (e) {
+                    err.innerText = e.message || "Invalid Credentials";
+                    err.classList.remove('hidden');
+                } finally {
+                    btnText.classList.remove('hidden');
+                    loader.classList.add('hidden');
+                }
+            },
+
+            logout: function() {
+                this.user = null;
+                document.getElementById('appWrapper').classList.add('hidden');
+                document.getElementById('loginView').classList.remove('hidden');
+                document.getElementById('pinInput').value = '';
+            },
+
+            setupUIForUser: function() {
+                document.getElementById('userName').innerText = this.user.name;
+                document.getElementById('userRole').innerText = this.user.role;
+                document.getElementById('userInitials').innerText = this.user.name.split(' ').map(n=>n[0]).join('').substring(0,2);
+                
+                // Role based UI filtering
+                const adminElements = document.querySelectorAll('.admin-only');
+                if (this.user.role !== 'ADMIN') {
+                    adminElements.forEach(el => el.style.display = 'none');
+                } else {
+                    adminElements.forEach(el => el.style.display = 'flex');
+                }
+            },
+
+            navigate: function(viewName) {
+                this.currentView = viewName;
+                
+                // Update Nav Active State
+                document.querySelectorAll('.nav-item').forEach(el => {
+                    if (el.dataset.view === viewName) {
+                        el.classList.add('bg-blue-50', 'dark:bg-slate-800/80', 'text-blue-600', 'dark:text-blue-400');
+                        el.classList.remove('text-slate-600', 'dark:text-slate-400');
+                    } else {
+                        el.classList.remove('bg-blue-50', 'dark:bg-slate-800/80', 'text-blue-600', 'dark:text-blue-400');
+                        el.classList.add('text-slate-600', 'dark:text-slate-400');
+                    }
+                });
+
+                // Update View Content
+                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+                document.getElementById('view-' + viewName).classList.remove('hidden');
+
+                // Titles
+                const titles = {
+                    'dashboard': 'Executive Dashboard',
+                    'financial': 'Consolidated Financials',
+                    'department': 'Department Analytics',
+                    'upload': 'Data Ingestion',
+                    'mapping': 'Mapping Engine',
+                    'users': 'User Management',
+                    'settings': 'Hotel Configuration'
+                };
+                document.getElementById('pageTitle').innerText = titles[viewName];
+
+                this.loadData();
+            },
+
+            initSystemData: async function() {
+                try {
+                    const res = await API.post('get_system_data', {});
+                    if(res.status === 'success') {
+                        this.systemData = res.data;
+                        this.populateDeptDropdown();
+                    }
+                    this.loadData(); 
+                } catch (e) { console.error("Failed to load system data", e); }
+            },
+
+            populateDeptDropdown: function() {
+                const select = document.getElementById('deptSelector');
+                select.innerHTML = '';
+                
+                if (!this.systemData.departments || this.systemData.departments.length === 0) {
+                    select.innerHTML = `<option value="">⚠️ Database Dept Kosong</option>`;
+                    this.handleDeptChange();
+                    return;
+                }
+
+                this.systemData.departments.forEach(d => {
+                    select.innerHTML += `<option value="${d.id}">${d.name}</option>`;
+                });
+                this.handleDeptChange();
+            },
+
+            handleDeptChange: function() {
+                const deptId = document.getElementById('deptSelector').value;
+                const outletSelect = document.getElementById('outletSelector');
+                
+                const deptOutlets = this.systemData.outlets.filter(o => o.department_id === deptId);
+                
+                if (deptOutlets.length > 0) {
+                    outletSelect.innerHTML = `<option value="ALL">⭐ Summary (All Outlets)</option>`;
+                    deptOutlets.forEach(o => {
+                        outletSelect.innerHTML += `<option value="${o.id}">${o.name}</option>`;
+                    });
+                    outletSelect.classList.remove('hidden');
+                } else {
+                    outletSelect.classList.add('hidden');
+                }
+                
+                this.loadDepartmentPnL();
+            },
+
+            downloadTemplate: function(type) {
+                let csvContent = "data:text/csv;charset=utf-8,";
+                let filename = "";
+
+                if (type === 'TB') {
+                    csvContent += "gl_code,gl_name,ending_balance\n";
+                    csvContent += "10-200-101,FO Supplies,1500000\n";
+                    filename = "iMers_TrialBalance_Template.csv";
+                } else if (type === 'BUDGET') {
+                    csvContent += "gl_code,jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec\n";
+                    csvContent += "10-200-101,1000,1000,1200,1000,1500,1000,1000,1000,1000,1000,1000,2000\n";
+                    csvContent += "ROOM_SOLD,4000,4200,4500,4100,4800,5000,5100,5000,4300,4500,4800,5200\n";
+                    filename = "iMers_BudgetKPI_12Month_Template.csv";
+                }
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", filename);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            },
+
+            showLoader: function(show) {
+                const el = document.getElementById('contentLoader');
+                if(show) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            },
+
+            loadData: async function() {
+                const period = document.getElementById('periodSelector').value;
+                if (!this.user || ['mapping', 'users', 'settings', 'upload'].includes(this.currentView)) return;
+
+                this.showLoader(true);
+                
+                try {
+                    if (this.currentView === 'dashboard') {
+                        const res = await API.post('get_dashboard', { period });
+                        this.renderDashboard(res.data);
+                    } else if (this.currentView === 'financial') {
+                        const res = await API.post('get_pnl', { period, filterType: 'HOTEL' });
+                        this.renderPnL(res.data, 'pnlTableBody');
+                    } else if (this.currentView === 'department') {
+                        this.loadDepartmentPnL();
+                    }
+                } catch(e) {
+                    console.error(e);
+                } finally {
+                    this.showLoader(false);
+                }
+            },
+
+            loadDepartmentPnL: async function() {
+                const period = document.getElementById('periodSelector').value;
+                const dept = document.getElementById('deptSelector').value;
+                const outlet = document.getElementById('outletSelector').value;
+                
+                if(!dept) return; // Wait for system data
+                
+                this.showLoader(true);
+                try {
+                    let filterType = 'DEPARTMENT';
+                    let filterId = dept;
+                    
+                    if (outlet && outlet !== 'ALL' && !document.getElementById('outletSelector').classList.contains('hidden')) {
+                        filterType = 'OUTLET';
+                        filterId = outlet;
+                    }
+
+                    const res = await API.post('get_pnl', { period, filterType: filterType, filterId: filterId });
+                    this.renderPnL(res.data, 'deptTableBody');
+                } catch(e) {
+                    console.error(e);
+                } finally {
+                    this.showLoader(false);
+                }
+            },
+
+            renderDashboard: function(data) {
+                if(!data || !data.kpi) return;
+                const kpi = data.kpi;
+                
+                // Update Cards
+                document.getElementById('kpiRev').innerText = formatMoney(kpi.revenue.actual);
+                const revVar = document.getElementById('kpiRevVar');
+                revVar.innerHTML = `<i data-lucide="${kpi.revenue.varPct >= 100 ? 'trending-up' : 'trending-down'}" class="w-3 h-3 mr-1"></i> ${formatPct(Math.abs(kpi.revenue.varPct - 100))}`;
+                revVar.className = `flex items-center px-1.5 py-0.5 rounded mr-2 text-xs font-bold ${kpi.revenue.varPct >= 100 ? 'text-emerald-500 bg-emerald-500/10' : 'text-red-500 bg-red-500/10'}`;
+
+                document.getElementById('kpiGop').innerText = formatMoney(kpi.gop.actual);
+                document.getElementById('kpiGopMargin').innerText = `Margin: ${formatPct(kpi.gop.marginPct)}`;
+
+                document.getElementById('kpiOcc').innerText = formatPct(kpi.occupancy.actual);
+                document.getElementById('kpiOccTarget').innerText = formatPct(kpi.occupancy.target);
+
+                document.getElementById('kpiRevpar').innerText = formatMoney(kpi.revpar.actual);
+                document.getElementById('kpiArr').innerText = formatMoney(kpi.arr.actual);
+
+                lucide.createIcons();
+                this.renderCharts(data.charts);
+            },
+
+            renderCharts: function(chartData) {
+                if(!chartData && !this._lastChartData) return;
+                if(chartData) this._lastChartData = chartData;
+                const data = this._lastChartData;
+
+                const gridColor = this.theme === 'dark' ? '#334155' : '#e2e8f0';
+                const textColor = this.theme === 'dark' ? '#94a3b8' : '#64748b';
+
+                const commonOptions = {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: gridColor }, ticks: { color: textColor } },
+                        x: { grid: { display: false }, ticks: { color: textColor } }
+                    }
+                };
+
+                // Revenue Chart
+                if (this.charts.revenue) this.charts.revenue.destroy();
+                const ctxRev = document.getElementById('chartRevenue').getContext('2d');
+                this.charts.revenue = new Chart(ctxRev, {
+                    type: 'line',
+                    data: {
+                        labels: data.months,
+                        datasets: [{
+                            label: 'Revenue',
+                            data: data.revenueTrend,
+                            borderColor: '#3B82F6', backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2, fill: true, tension: 0.4
+                        }]
+                    },
+                    options: commonOptions
+                });
+
+                // GOP Chart
+                if (this.charts.gop) this.charts.gop.destroy();
+                const ctxGop = document.getElementById('chartGop').getContext('2d');
+                this.charts.gop = new Chart(ctxGop, {
+                    type: 'bar',
+                    data: {
+                        labels: data.months,
+                        datasets: [{
+                            label: 'GOP Actual',
+                            data: data.gopTrend,
+                            backgroundColor: '#10B981', borderRadius: 4
+                        }]
+                    },
+                    options: commonOptions
+                });
+            },
+
+            renderPnL: function(pnlArray, tableId) {
+                const tbody = document.getElementById(tableId);
+                let html = '';
+                if(!pnlArray) return;
+
+                pnlArray.forEach(group => {
+                    // Group Header (e.g. REVENUE)
+                    html += `<tr class="bg-slate-100/50 dark:bg-slate-800/80">
+                        <td class="px-6 py-3 font-bold text-slate-800 dark:text-slate-200">${group.group}</td>
+                        <td class="px-4 py-3 text-right font-bold text-slate-800 dark:text-slate-200">${formatMoney(group.totalAct)}</td>
+                        <td class="px-4 py-3 text-right font-bold text-slate-800 dark:text-slate-200">${formatMoney(group.totalBud)}</td>
+                        <td class="px-4 py-3 text-right font-bold ${group.totalAct - group.totalBud >= 0 ? 'text-emerald-500' : 'text-red-500'}">${formatMoney(group.totalAct - group.totalBud)}</td>
+                        <td class="px-4 py-3 text-right font-bold text-slate-800 dark:text-slate-200">${group.totalBud ? formatPct((group.totalAct/group.totalBud)*100) : '0%'}</td>
+                    </tr>`;
+
+                    group.subgroups.forEach(sub => {
+                        // Items mapping
+                        sub.items.forEach(item => {
+                            html += `<tr>
+                                <td class="px-6 py-2.5 text-slate-600 dark:text-slate-400 pl-10">${item.label}</td>
+                                <td class="px-4 py-2.5 text-right font-medium dark:text-slate-300">${formatMoney(item.actual)}</td>
+                                <td class="px-4 py-2.5 text-right font-medium dark:text-slate-300">${formatMoney(item.budget)}</td>
+                                <td class="px-4 py-2.5 text-right font-medium ${item.variance >= 0 ? 'text-emerald-500' : 'text-red-500'}">${formatMoney(item.variance)}</td>
+                                <td class="px-4 py-2.5 text-right font-medium dark:text-slate-300">${formatPct(item.achievePct)}</td>
+                            </tr>`;
+                        });
+                        
+                        // Subtotal
+                        html += `<tr class="border-b border-slate-100 dark:border-slate-800/50">
+                            <td class="px-6 py-2 font-semibold text-slate-700 dark:text-slate-300 pl-10">Total ${sub.subgroup}</td>
+                            <td class="px-4 py-2 text-right font-semibold dark:text-slate-300">${formatMoney(sub.subAct)}</td>
+                            <td class="px-4 py-2 text-right font-semibold dark:text-slate-300">${formatMoney(sub.subBud)}</td>
+                            <td class="px-4 py-2 text-right font-semibold ${sub.subAct - sub.subBud >= 0 ? 'text-emerald-500' : 'text-red-500'}">${formatMoney(sub.subAct - sub.subBud)}</td>
+                            <td class="px-4 py-2 text-right font-semibold dark:text-slate-300">${sub.subBud ? formatPct((sub.subAct/sub.subBud)*100) : '0%'}</td>
+                        </tr>`;
+                    });
+                });
+
+                tbody.innerHTML = html;
+            }
+        };
+
+        // --- MOCK API ENGINE (Used if GAS_API_URL is empty) ---
+        const API = {
+            post: async function(action, payload) {
+                if (CONFIG.GAS_API_URL) {
+                    // REAL GAS BACKEND CALL with text/plain to bypass CORS Preflight Block
+                    const response = await fetch(CONFIG.GAS_API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action, payload, token: App.user ? App.user.token : null }),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        redirect: 'follow'
+                    });
+                    return await response.json();
+                } else {
+                    // MOCK DELAY & DATA FOR PREVIEW
+                    return new Promise(resolve => {
+                        setTimeout(() => resolve(MockDB.process(action, payload)), 800);
+                    });
+                }
+            }
+        };
+
+        const MockDB = {
+            process: function(action, payload) {
+                if (action === 'login') {
+                    if (payload.username === 'admin' && payload.pin === '1234') return { status: 'success', data: { user: { id: 'U1', name: 'James Wilson', role: 'ADMIN', token: 'mock-token-xyz' } } };
+                    throw new Error("Invalid Credentials.");
+                }
+                if (action === 'get_dashboard') {
+                    return { status: 'success', data: {
+                        kpi: {
+                            occupancy: { actual: 78.5, target: 80.0 },
+                            arr: { actual: 1250000, target: 1200000 },
+                            revpar: { actual: 981250, target: 960000 },
+                            revenue: { actual: 4500000000, budget: 4200000000, varPct: 107.1 },
+                            gop: { actual: 1800000000, budget: 1600000000, marginPct: 40.0 }
+                        },
+                        charts: {
+                            revenueTrend: [3.8, 3.9, 4.1, 4.0, 4.2, 4.5], // scaled for UI display in billions
+                            gopTrend: [1.2, 1.3, 1.4, 1.3, 1.6, 1.8],
+                            months: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May']
+                        }
+                    }};
+                }
+                if (action === 'get_system_data') {
+                    return { status: 'success', data: {
+                        departments: [
+                            { id: 'ROOMS', name: 'Rooms Division' },
+                            { id: 'FNB', name: 'Food & Beverage' },
+                            { id: 'AAG', name: 'Admin & General' }
+                        ],
+                        outlets: [
+                            { id: 'OUT_REST', department_id: 'FNB', name: 'Capriccio Restaurant' }
+                        ]
+                    }};
+                }
+                if (action === 'get_pnl') {
+                    // Generate Mock Hierarchical P&L
+                    const factor = payload.filterType === 'DEPARTMENT' ? 0.3 : 1.0;
+                    return { status: 'success', data: [
+                        { group: 'REVENUE', totalAct: 4500000000 * factor, totalBud: 4200000000 * factor, totalLY: 4000000000 * factor, subgroups: [
+                            { subgroup: 'Rooms', subAct: 2800000000 * factor, subBud: 2600000000 * factor, items: [
+                                { label: 'Transient Rooms', actual: 1500000000 * factor, budget: 1400000000 * factor, variance: 100000000 * factor, achievePct: 107 }
+                            ]}
+                        ]}
+                    ]};
+                }
+            }
+        };
+
+        // Initialize App
+        window.onload = () => App.init();
+
+    </script>
+</body>
+</html>
