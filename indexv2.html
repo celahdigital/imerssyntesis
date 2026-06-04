@@ -305,12 +305,15 @@
                         <p class="text-slate-500 text-sm mb-6">Upload Trial Balance ending balances or Budget mapping Excel files to update the reporting engine.</p>
                         
                         <div class="flex flex-col gap-4">
-                            <div class="flex justify-center gap-4 mb-2">
+                            <div class="flex justify-center gap-4 mb-2 flex-wrap">
                                 <button onclick="App.downloadTemplate('TB')" class="text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-md flex items-center gap-1 border border-blue-200 transition-colors">
                                     <i data-lucide="download" class="w-3 h-3"></i> Trial Balance Template
                                 </button>
                                 <button onclick="App.downloadTemplate('BUDGET')" class="text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-md flex items-center gap-1 border border-emerald-200 transition-colors">
                                     <i data-lucide="download" class="w-3 h-3"></i> Budget/KPI (12-Mo) Template
+                                </button>
+                                <button onclick="App.downloadTemplate('MAPPING')" class="text-xs font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-md flex items-center gap-1 border border-purple-200 transition-colors">
+                                    <i data-lucide="download" class="w-3 h-3"></i> Mapping Template
                                 </button>
                             </div>
 
@@ -334,16 +337,16 @@
                                 </select>
                             </div>
                             
-                            <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 hover:border-blue-500 transition-colors cursor-pointer bg-slate-50 dark:bg-slate-900/50 group">
-                                <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
-                                <label for="fileInput" class="cursor-pointer flex flex-col items-center">
+                            <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 hover:border-blue-500 transition-colors cursor-pointer bg-slate-50 dark:bg-slate-900/50 group" onclick="document.getElementById('fileInput').click()">
+                                <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv" onchange="App.handleFileSelect(event)">
+                                <div class="flex flex-col items-center">
                                     <i data-lucide="file-text" class="w-8 h-8 text-slate-400 mb-2 group-hover:text-blue-500 transition-colors"></i>
-                                    <span class="text-sm font-medium text-blue-600">Click to select file</span>
+                                    <span class="text-sm font-medium text-blue-600" id="fileNameDisplay">Click to select file</span>
                                     <span class="text-xs text-slate-400 mt-1">XLSX, CSV up to 10MB</span>
-                                </label>
+                                </div>
                             </div>
                             
-                            <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-all shadow-md w-full">
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-all shadow-md w-full" onclick="alert('Upload functionality requires backend integration.')">
                                 Process & Ingest
                             </button>
                         </div>
@@ -354,7 +357,7 @@
                 <div id="view-mapping" class="view-section hidden space-y-4">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="font-bold text-lg dark:text-white">Chart of Accounts Mapping</h3>
-                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2" onclick="alert('Functionality to add mapping via UI requires backend integration. Please use Google Sheets directly or CSV Upload for bulk mapping.')">
                             <i data-lucide="plus" class="w-4 h-4"></i> New Map
                         </button>
                     </div>
@@ -382,7 +385,7 @@
                 <div id="view-users" class="view-section hidden space-y-4">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="font-bold text-lg dark:text-white">User Management</h3>
-                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2" onclick="alert('Functionality to add users via UI requires backend integration. Please manage users directly in the USERS sheet.')">
                             <i data-lucide="user-plus" class="w-4 h-4"></i> Add User
                         </button>
                     </div>
@@ -431,7 +434,7 @@
                             </div>
                         </div>
                         <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700 flex justify-end">
-                            <button class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-all shadow-sm">Save Profile</button>
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-all shadow-sm" onclick="alert('Settings save functionality requires backend integration.')">Save Profile</button>
                         </div>
                     </div>
                 </div>
@@ -534,12 +537,13 @@
                 document.getElementById('appWrapper').classList.add('hidden');
                 document.getElementById('loginView').classList.remove('hidden');
                 document.getElementById('pinInput').value = '';
+                document.getElementById('usernameInput').value = '';
             },
 
             setupUIForUser: function() {
                 document.getElementById('userName').innerText = this.user.name;
                 document.getElementById('userRole').innerText = this.user.role;
-                document.getElementById('userInitials').innerText = this.user.name.split(' ').map(n=>n[0]).join('').substring(0,2);
+                document.getElementById('userInitials').innerText = this.user.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
                 
                 const adminElements = document.querySelectorAll('.admin-only');
                 if (this.user.role !== 'ADMIN') {
@@ -593,7 +597,7 @@
                 const select = document.getElementById('deptSelector');
                 select.innerHTML = '';
                 if (!this.systemData.departments || this.systemData.departments.length === 0) {
-                    select.innerHTML = `<option value="">⚠️ Database Dept Kosong</option>`;
+                    select.innerHTML = `<option value="">⚠️ No Departments Found</option>`;
                     this.handleDeptChange();
                     return;
                 }
@@ -625,14 +629,17 @@
                 let filename = "";
 
                 if (type === 'TB') {
-                    csvContent += "gl_code,gl_name,ending_balance\n";
-                    csvContent += "10-200-101,FO Supplies,1500000\n";
+                    csvContent += "gl_code,ending_balance\n";
+                    csvContent += "10-200-101,1500000\n";
                     filename = "iMers_TrialBalance_Template.csv";
                 } else if (type === 'BUDGET') {
                     csvContent += "gl_code,jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec\n";
                     csvContent += "10-200-101,1000,1000,1200,1000,1500,1000,1000,1000,1000,1000,1000,2000\n";
-                    csvContent += "ROOM_SOLD,4000,4200,4500,4100,4800,5000,5100,5000,4300,4500,4800,5200\n";
                     filename = "iMers_BudgetKPI_12Month_Template.csv";
+                } else if (type === 'MAPPING') {
+                    csvContent += "gl_code,gl_name,dc_type,department_id,outlet_id,pnl_group,pnl_subgroup,report_label,contribution_group,kpi_group,report_order,status\n";
+                    csvContent += "10-200-101,FO Supplies,DEBIT,ROOMS,,EXPENSES,Rooms Dept,Guest Supplies,,,10,ACTIVE\n";
+                    filename = "iMers_Mapping_Template.csv";
                 }
 
                 const encodedUri = encodeURI(csvContent);
@@ -642,6 +649,13 @@
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+            },
+            
+            handleFileSelect: function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    document.getElementById('fileNameDisplay').textContent = file.name;
+                }
             },
 
             showLoader: function(show) {
@@ -823,7 +837,7 @@
                             : '<span class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-bold">INACTIVE</span>';
                         
                         html += `<tr>
-                            <td class="px-6 py-3 font-medium dark:text-white">${u.username}</td>
+                            <td class="px-6 py-3 font-medium dark:text-slate-200">${u.username}</td>
                             <td class="px-6 py-3 text-slate-600 dark:text-slate-400">${u.full_name}</td>
                             <td class="px-4 py-3 text-slate-600 dark:text-slate-400">${u.role_name}</td>
                             <td class="px-4 py-3 text-slate-600 dark:text-slate-400">${u.department_name}</td>
@@ -831,7 +845,7 @@
                         </tr>`;
                     });
                 } else {
-                    html = `<tr><td colspan="5" class="text-center py-4 text-slate-500">No users found.</td></tr>`;
+                    html = `<tr><td colspan="5" class="text-center py-4 text-slate-500">No users found. Please check Google Sheet USERS.</td></tr>`;
                 }
                 tbody.innerHTML = html;
             },
@@ -842,7 +856,7 @@
                 if(mapArray && mapArray.length > 0) {
                     mapArray.forEach(m => {
                         html += `<tr>
-                            <td class="px-6 py-3 font-medium dark:text-white">${m.gl_code}</td>
+                            <td class="px-6 py-3 font-medium dark:text-slate-200">${m.gl_code}</td>
                             <td class="px-6 py-3 text-slate-600 dark:text-slate-400">${m.gl_name}</td>
                             <td class="px-4 py-3 text-slate-600 dark:text-slate-400">${m.department_id}</td>
                             <td class="px-4 py-3 text-slate-600 dark:text-slate-400">${m.pnl_group} > ${m.pnl_subgroup}</td>
@@ -850,7 +864,7 @@
                         </tr>`;
                     });
                 } else {
-                    html = `<tr><td colspan="5" class="text-center py-4 text-slate-500">No mapping data found.</td></tr>`;
+                    html = `<tr><td colspan="5" class="text-center py-4 text-slate-500">No mapping data found. Please check Google Sheet GL_MAPPING.</td></tr>`;
                 }
                 tbody.innerHTML = html;
             }
